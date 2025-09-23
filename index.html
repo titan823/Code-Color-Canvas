@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Code Color Canvas</title>
     
-    <!-- CodeMirrorのCSSとJSをCDNから読み込む -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/theme/material-darker.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.js"></script>
@@ -27,6 +26,7 @@
         .main-content { flex-grow: 1; position: relative; }
         .main-view { display: none; height: 100%; width: 100%; position: absolute; }
         .main-view.active { display: flex; }
+        /* Code View */
         #code-view { flex-direction: column; }
         .code-tabs { display: flex; background-color: var(--bg-color); flex-shrink: 0; }
         .code-tab-button { padding: 10px 15px; border: none; background-color: #2d2d2d; color: var(--text-color); cursor: pointer; border-bottom: 3px solid transparent; }
@@ -35,6 +35,7 @@
         .CodeMirror { position: absolute; top: 0; left: 0; width: 100%; height: 100% !important; font-size: 14px; }
         .editor-wrapper { display: none; height: 100%; }
         .editor-wrapper.active { display: block; }
+        /* Preview View */
         #preview-view { flex-direction: column; }
         .panel-header { background-color: var(--header-bg-color); padding: 8px 12px; font-weight: bold; flex-shrink: 0; }
         .preview-panel { flex-grow: 1; min-height: 50%; }
@@ -47,230 +48,170 @@
         .inspector-item input[type="color"] { padding: 0; border: none; background: none; width: 28px; height: 28px; cursor: pointer; }
         .revert-btn { background: none; border: 1px solid #666; color: #ccc; cursor: pointer; padding: 2px 6px; font-size: 0.8em; border-radius: 3px; }
         .revert-btn:hover { background-color: #555; }
+        /* Color Picker View */
+        #picker-view { padding: 20px; flex-direction: row; gap: 20px; }
+        .picker-controls { width: 250px; flex-shrink: 0; display: flex; flex-direction: column; gap: 15px; overflow-y: auto;}
+        .picker-canvas-wrapper { flex-grow: 1; background-color: var(--panel-bg-color); border: 1px dashed var(--border-color); display: flex; align-items: center; justify-content: center; overflow: auto; position: relative; }
+        #image-canvas { max-width: 100%; max-height: 100%; object-fit: contain; cursor: crosshair; }
+        .color-info-box { background-color: var(--panel-bg-color); padding: 15px; border-radius: 5px; border: 1px solid var(--border-color); }
+        .color-info-box h3, .picker-option h4 { margin-top: 0; font-size: 1em; }
+        .picker-option { padding: 10px; border: 1px solid var(--border-color); border-radius: 5px; }
+        .picker-option label { display: flex; align-items: center; gap: 5px; margin-bottom: 5px; font-size: 0.9em; cursor: pointer; }
+        .picker-option input[type="number"] { width: 60px; background-color: var(--input-bg-color); color: var(--text-color); border: 1px solid var(--input-border-color); padding: 2px; }
+        .color-preview { width: 100%; height: 60px; border-radius: 4px; border: 1px solid var(--border-color); margin-bottom: 10px; }
+        .color-code { margin-bottom: 8px; }
+        .color-code label { display: block; font-size: 0.8em; margin-bottom: 3px; color: #aaa; }
+        .color-code input { width: 100%; box-sizing: border-box; background-color: var(--input-bg-color); border: 1px solid var(--input-border-color); color: var(--text-color); padding: 8px; border-radius: 3px; cursor: pointer; }
+        .toast-message { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background-color: #007acc; color: white; padding: 10px 20px; border-radius: 5px; z-index: 1000; opacity: 0; transition: opacity 0.3s; }
+        .toast-message.show { opacity: 1; }
+        #touch-marker { position: absolute; display: none; width: 22px; height: 22px; border: 2px solid rgba(255, 255, 255, 0.9); border-radius: 50%; transform: translate(-50%, -50%); pointer-events: none; box-shadow: 0 0 8px rgba(0, 0, 0, 0.7); background-clip: padding-box; }
+        #touch-marker::before, #touch-marker::after { content: ''; position: absolute; background-color: rgba(255, 255, 255, 0.9); }
+        #touch-marker::before { left: 50%; top: -3px; width: 2px; height: 8px; transform: translateX(-50%); }
+        #touch-marker::after { top: 50%; left: -3px; height: 2px; width: 8px; transform: translateY(-50%); }
     </style>
 </head>
 <body>
-    <header>
-        Code Color Canvas
-        <div class="main-tabs">
-            <button class="main-tab-button active" onclick="showMainView('code')">コード編集</button>
-            <button class="main-tab-button" onclick="showMainView('preview')">プレビュー＆編集</button>
-        </div>
-    </header>
+    <header><!-- ... (省略) ... --></header>
 
     <main class="main-content">
-        <div id="code-view" class="main-view active">
-            <div class="code-tabs">
-                <button class="code-tab-button active" onclick="showEditor('html')">HTML</button>
-                <button class="code-tab-button" onclick="showEditor('css')">CSS</button>
-                <button class="code-tab-button" onclick="showEditor('js')">JavaScript</button>
-            </div>
-            <div class="editor-container">
-                <div id="html-editor-wrapper" class="editor-wrapper active"><textarea id="html-code"></textarea></div>
-                <div id="css-editor-wrapper" class="editor-wrapper"><textarea id="css-code"></textarea></div>
-                <div id="js-editor-wrapper" class="editor-wrapper"><textarea id="js-code"></textarea></div>
-            </div>
-        </div>
+        <!-- Code View -->
+        <div id="code-view" class="main-view active"><!-- ... (省略) ... --></div>
+        <!-- Preview & Inspector View -->
+        <div id="preview-view" class="main-view"><!-- ... (省略) ... --></div>
 
-        <div id="preview-view" class="main-view">
-            <div class="panel-header">プレビュー</div>
-            <div class="preview-panel"><iframe id="preview-frame"></iframe></div>
-            <div class="inspector-panel">
-                <div class="panel-header">インスペクター</div>
-                <div id="inspector-content">
-                    <p id="inspector-placeholder">プレビュー上の要素をクリックして選択してください。</p>
-                    <div id="inspector-ui" style="display: none;">
-                        <div class="inspector-item"><label>セレクタ</label><b id="selected-element-selector"></b></div>
-                        <div class="inspector-item"><label for="textContent">テキスト内容</label><textarea id="inspector-textContent" rows="2"></textarea></div>
-                        <div class="inspector-item"><label for="color">文字色</label><input type="text" id="inspector-color-text"><input type="color" id="inspector-color-picker"><button class="revert-btn" data-property="color" data-inputs="inspector-color-text,inspector-color-picker">元に戻す</button></div>
-                        <div class="inspector-item"><label for="bgColor">背景色</label><input type="text" id="inspector-bgColor-text"><input type="color" id="inspector-bgColor-picker"><button class="revert-btn" data-property="backgroundColor" data-inputs="inspector-bgColor-text,inspector-bgColor-picker">元に戻す</button></div>
-                        <div class="inspector-item"><label for="padding">パディング</label><input type="text" id="inspector-padding" placeholder="例: 10px"><button class="revert-btn" data-property="padding" data-inputs="inspector-padding">元に戻す</button></div>
-                        <div class="inspector-item"><label for="margin">マージン</label><input type="text" id="inspector-margin" placeholder="例: 10px auto"><button class="revert-btn" data-property="margin" data-inputs="inspector-margin">元に戻す</button></div>
-                        <div class="inspector-item"><label for="fontSize">フォントサイズ</label><input type="text" id="inspector-fontSize" placeholder="例: 16px"><button class="revert-btn" data-property="fontSize" data-inputs="inspector-fontSize">元に戻す</button></div>
-                    </div>
+        <!-- Color Picker View -->
+        <div id="picker-view" class="main-view">
+            <div class="picker-controls">
+                <h3>画像から色を抽出</h3>
+                <input type="file" id="image-loader" accept="image/*">
+                
+                <div class="picker-option">
+                    <h4>スポイトモード</h4>
+                    <label><input type="radio" name="picker-mode" value="click" checked> クリックで選択</label>
+                    <label><input type="radio" name="picker-mode" value="drag"> ドラッグで選択</label>
                 </div>
+                
+                <div class="picker-option">
+                    <h4>タッチ操作オプション</h4>
+                    <label><input type="checkbox" id="touch-offset-enabled" checked> 指の位置をずらす</label>
+                    <label>ずらす距離(px): <input type="number" id="touch-offset-value" value="50"></label>
+                </div>
+
+                <div id="hover-color-info" class="color-info-box"><!-- ... (省略) ... --></div>
+                <div id="selected-color-info" class="color-info-box"><!-- ... (省略) ... --></div>
+            </div>
+            <div class="picker-canvas-wrapper">
+                <canvas id="image-canvas"></canvas>
+                <div id="touch-marker"></div>
             </div>
         </div>
     </main>
+    <div id="toast" class="toast-message"></div>
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            let selectedElement = null;
-            let lastHighlightedElement = null;
-            let originalStyles = {};
-
+            // (前回までのコードはここにペースト)
+            // ... (START) ...
+            let selectedElement = null, lastHighlightedElement = null, originalStyles = {};
             const htmlEditor = CodeMirror.fromTextArea(document.getElementById('html-code'), { mode: 'xml', htmlMode: true, theme: 'material-darker', lineNumbers: true });
             const cssEditor = CodeMirror.fromTextArea(document.getElementById('css-code'), { mode: 'css', theme: 'material-darker', lineNumbers: true });
             const jsEditor = CodeMirror.fromTextArea(document.getElementById('js-code'), { mode: 'javascript', theme: 'material-darker', lineNumbers: true });
-
             const initialHTML = `<!-- ここにHTMLを記述します -->\n<div class="container">\n    <h1 id="main-title">Code Color Canvasへようこそ！</h1>\n    <p>このテキストやボタンを編集してみましょう。</p>\n    <button id="action-btn">クリック！</button>\n</div>`;
             const initialCSS = `/* ここにCSSを記述します */\nbody {\n    font-family: sans-serif;\n    background-color: #f0f0f0;\n    display: flex;\n    justify-content: center;\n    align-items: center;\n    height: 100vh;\n    margin: 0;\n}\n\n.container {\n    text-align: center;\n    padding: 40px;\n    background-color: white;\n    border-radius: 8px;\n    box-shadow: 0 4px 8px rgba(0,0,0,0.1);\n}\n\n#main-title {\n    color: #333;\n}\n\n#action-btn {\n    background-color: #007acc;\n    color: white;\n    border: none;\n    padding: 10px 20px;\n    border-radius: 5px;\n    cursor: pointer;\n    font-size: 16px;\n}`;
             const initialJS = `// ここにJavaScriptを記述します\ndocument.getElementById('action-btn').addEventListener('click', () => {\n    alert('ボタンがクリックされました！');\n});`;
+            htmlEditor.setValue(initialHTML); cssEditor.setValue(initialCSS); jsEditor.setValue(initialJS);
+            document.getElementById('code-view').innerHTML = `<div class="code-tabs"><button class="code-tab-button active" onclick="showEditor('html')">HTML</button><button class="code-tab-button" onclick="showEditor('css')">CSS</button><button class="code-tab-button" onclick="showEditor('js')">JavaScript</button></div><div class="editor-container"><div id="html-editor-wrapper" class="editor-wrapper active"><textarea id="html-code"></textarea></div><div id="css-editor-wrapper" class="editor-wrapper"><textarea id="css-code"></textarea></div><div id="js-editor-wrapper" class="editor-wrapper"><textarea id="js-code"></textarea></div></div>`;
+            document.querySelector('header').innerHTML = `Code Color Canvas <div class="main-tabs"><button class="main-tab-button active" onclick="showMainView('code')">コード編集</button><button class="main-tab-button" onclick="showMainView('preview')">プレビュー＆編集</button><button class="main-tab-button" onclick="showMainView('picker')">カラーピッカー</button></div>`;
+            document.getElementById('preview-view').innerHTML = `<div class="panel-header">プレビュー</div><div class="preview-panel"><iframe id="preview-frame"></iframe></div><div class="inspector-panel"><div class="panel-header">インスペクター</div><div id="inspector-content"><p id="inspector-placeholder">プレビュー上の要素をクリックして選択してください。</p><div id="inspector-ui" style="display: none;"><div class="inspector-item"><label>セレクタ</label><b id="selected-element-selector"></b></div><div class="inspector-item"><label for="textContent">テキスト内容</label><textarea id="inspector-textContent" rows="2"></textarea></div><div class="inspector-item"><label for="color">文字色</label><input type="text" id="inspector-color-text"><input type="color" id="inspector-color-picker"><button class="revert-btn" data-property="color" data-inputs="inspector-color-text,inspector-color-picker">元に戻す</button></div><div class="inspector-item"><label for="bgColor">背景色</label><input type="text" id="inspector-bgColor-text"><input type="color" id="inspector-bgColor-picker"><button class="revert-btn" data-property="backgroundColor" data-inputs="inspector-bgColor-text,inspector-bgColor-picker">元に戻す</button></div><div class="inspector-item"><label for="padding">パディング</label><input type="text" id="inspector-padding" placeholder="例: 10px"><button class="revert-btn" data-property="padding" data-inputs="inspector-padding">元に戻す</button></div><div class="inspector-item"><label for="margin">マージン</label><input type="text" id="inspector-margin" placeholder="例: 10px auto"><button class="revert-btn" data-property="margin" data-inputs="inspector-margin">元に戻す</button></div><div class="inspector-item"><label for="fontSize">フォントサイズ</label><input type="text" id="inspector-fontSize" placeholder="例: 16px"><button class="revert-btn" data-property="fontSize" data-inputs="inspector-fontSize">元に戻す</button></div></div></div></div>`;
+            document.getElementById('hover-color-info').innerHTML = `<h3>カーソル位置の色</h3><div id="hover-color-preview" class="color-preview" style="background-color: #fff;"></div><div class="color-code"><label>HEX</label><input type="text" id="hover-hex-code" readonly value="#FFFFFF" title="クリックしてコピー"></div><div class="color-code"><label>RGB</label><input type="text" id="hover-rgb-code" readonly value="rgb(255, 255, 255)" title="クリックしてコピー"></div>`;
+            document.getElementById('selected-color-info').innerHTML = `<h3>選択した色</h3><div id="selected-color-preview" class="color-preview" style="background-color: transparent;"></div><div class="color-code"><label>HEX</label><input type="text" id="selected-hex-code" readonly value="-" title="クリックしてコピー"></div><div class="color-code"><label>RGB</label><input type="text" id="selected-rgb-code" readonly value="-" title="クリックしてコピー"></div>`;
+            function updatePreview() { const previewFrame = document.getElementById('preview-frame'); const preview =  previewFrame.contentDocument ||  previewFrame.contentWindow.document; const fullHTML = `<!DOCTYPE html><html><head><style>${cssEditor.getValue()}</style></head><body>${htmlEditor.getValue()}<script>${jsEditor.getValue()}<\/script></body></html>`; preview.open(); preview.write(fullHTML); preview.close(); setupInspectorListeners(); }
+            htmlEditor.on('change', updatePreview); cssEditor.on('change', updatePreview); jsEditor.on('change', updatePreview);
+            window.showEditor = function(editorName) { document.querySelectorAll('.editor-wrapper').forEach(w => w.classList.remove('active')); document.querySelectorAll('.code-tab-button').forEach(b => b.classList.remove('active')); document.getElementById(`${editorName}-editor-wrapper`).classList.add('active'); document.querySelector(`.code-tab-button[onclick="showEditor('${editorName}')"]`).classList.add('active'); if (editorName === 'html') htmlEditor.refresh(); if (editorName === 'css') cssEditor.refresh(); if (editorName === 'js') jsEditor.refresh(); }
+            function setupInspectorListeners() { const previewBody = document.getElementById('preview-frame').contentWindow.document.body; if (!previewBody) return; previewBody.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); if (lastHighlightedElement) lastHighlightedElement.style.outline = ''; selectedElement = e.target; selectedElement.style.outline = '2px solid var(--primary-color)'; lastHighlightedElement = selectedElement; populateInspector(selectedElement); }); }
+            function getCssSelector(el) { if (!(el instanceof Element)) return; let path = []; while (el.nodeType === Node.ELEMENT_NODE) { let selector = el.nodeName.toLowerCase(); if (el.id) { selector = '#' + el.id; path.unshift(selector); break; } else { let sib = el, nth = 1; while (sib = sib.previousElementSibling) { if (sib.nodeName.toLowerCase() == selector) nth++; } if (nth != 1) selector += `:nth-of-type(${nth})`; } path.unshift(selector); el = el.parentNode; } return path.join(" > "); }
+            function populateInspector(element) { document.getElementById('inspector-placeholder').style.display = 'none'; document.getElementById('inspector-ui').style.display = 'block'; const styles = window.getComputedStyle(element); originalStyles = { color: styles.color, backgroundColor: styles.backgroundColor, padding: styles.padding, margin: styles.margin, fontSize: styles.fontSize }; document.getElementById('selected-element-selector').textContent = getCssSelector(element); document.getElementById('inspector-textContent').value = element.innerText; document.getElementById('inspector-color-text').value = styles.color; document.getElementById('inspector-color-picker').value = rgbStrToHex(styles.color); document.getElementById('inspector-bgColor-text').value = styles.backgroundColor; document.getElementById('inspector-bgColor-picker').value = rgbStrToHex(styles.backgroundColor); document.getElementById('inspector-padding').value = styles.padding; document.getElementById('inspector-margin').value = styles.margin; document.getElementById('inspector-fontSize').value = styles.fontSize; }
+            function applyStyleChange(property, value) { if (!selectedElement) return; selectedElement.style[property] = value; const selector = getCssSelector(selectedElement); let cssCode = cssEditor.getValue(); const cssProperty = property.replace(/([A-Z])/g, '-$1').toLowerCase(); const regex = new RegExp(`(${selector.replace(/[\/\\^$*+?.()|[\]{}]/g, '\\$&')})\\s*\\{([^}]*)\\}`, 's'); const match = cssCode.match(regex); if (match) { let properties = match[2]; const propRegex = new RegExp(`(^|;)\\s*${cssProperty}\\s*:[^;]+`, 'i'); if (propRegex.test(properties)) { cssCode = cssCode.replace(match[0], `${selector} {${properties.replace(propRegex, `$1 ${cssProperty}: ${value}`)}}`); } else { const trimmed = properties.trim(); const newProps = trimmed + (trimmed.endsWith(';') || trimmed === '' ? '' : ';') + ` ${cssProperty}: ${value}; `; cssCode = cssCode.replace(match[0], `${selector} {\n${newProps}\n}`); } } else { cssCode += `\n\n${selector} {\n    ${cssProperty}: ${value};\n}`; } cssEditor.setValue(cssCode); }
+            function applyTextChange(newText) { if (!selectedElement) return; const selector = getCssSelector(selectedElement); const htmlString = htmlEditor.getValue(); const parser = new DOMParser(); const doc = parser.parseFromString(`<body>${htmlString}</body>`, 'text/html'); const targetNode = doc.querySelector(selector); if (targetNode) { targetNode.innerText = newText; htmlEditor.setValue(doc.body.innerHTML); } }
+            function setupInspectorInputEvents() { const colorText = document.getElementById('inspector-color-text'), colorPicker = document.getElementById('inspector-color-picker'); colorText.addEventListener('change', (e) => { applyStyleChange('color', e.target.value); colorPicker.value = rgbStrToHex(e.target.value); }); colorPicker.addEventListener('input', (e) => { colorText.value = e.target.value; applyStyleChange('color', e.target.value); }); const bgColorText = document.getElementById('inspector-bgColor-text'), bgColorPicker = document.getElementById('inspector-bgColor-picker'); bgColorText.addEventListener('change', (e) => { applyStyleChange('backgroundColor', e.target.value); bgColorPicker.value = rgbStrToHex(e.target.value); }); bgColorPicker.addEventListener('input', (e) => { bgColorText.value = e.target.value; applyStyleChange('backgroundColor', e.target.value); }); document.getElementById('inspector-padding').addEventListener('change', (e) => applyStyleChange('padding', e.target.value)); document.getElementById('inspector-margin').addEventListener('change', (e) => applyStyleChange('margin', e.target.value)); document.getElementById('inspector-fontSize').addEventListener('change', (e) => applyStyleChange('fontSize', e.target.value)); const textContentArea = document.getElementById('inspector-textContent'); textContentArea.addEventListener('input', (e) => { if (selectedElement) selectedElement.innerText = e.target.value; }); textContentArea.addEventListener('change', (e) => applyTextChange(e.target.value)); document.getElementById('inspector-ui').addEventListener('click', (e) => { if (e.target.classList.contains('revert-btn')) { const property = e.target.dataset.property; const originalValue = originalStyles[property]; if (originalValue === undefined) return; const inputIds = e.target.dataset.inputs.split(','); inputIds.forEach(id => { const inputEl = document.getElementById(id); if (inputEl.type === 'color') inputEl.value = rgbStrToHex(originalValue); else inputEl.value = originalValue; }); applyStyleChange(property, originalValue); } }); }
+            function rgbStrToHex(colorStr) { const tempEl = document.createElement('div'); tempEl.style.color = colorStr; document.body.appendChild(tempEl); const computedColor = window.getComputedStyle(tempEl).color; document.body.removeChild(tempEl); if (!computedColor || computedColor.indexOf('rgb') === -1) return '#000000'; const match = computedColor.match(/\d+/g); if (!match) return '#000000'; const [r, g, b] = match.map(Number); return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1).toUpperCase(); }
+            // ... (END) ...
 
-            htmlEditor.setValue(initialHTML);
-            cssEditor.setValue(initialCSS);
-            jsEditor.setValue(initialJS);
+            window.showMainView = function(viewName) { document.querySelectorAll('.main-view').forEach(v => v.classList.remove('active')); document.querySelectorAll('.main-tab-button').forEach(b => b.classList.remove('active')); document.getElementById(`${viewName}-view`).classList.add('active'); document.querySelector(`.main-tab-button[onclick="showMainView('${viewName}')"]`).classList.add('active'); };
             
-            function updatePreview() {
-                const previewFrame = document.getElementById('preview-frame');
-                const preview =  previewFrame.contentDocument ||  previewFrame.contentWindow.document;
-                const fullHTML = `<!DOCTYPE html><html><head><style>${cssEditor.getValue()}</style></head><body>${htmlEditor.getValue()}<script>${jsEditor.getValue()}<\/script></body></html>`;
-                preview.open();
-                preview.write(fullHTML);
-                preview.close();
-                setupInspectorListeners();
+            // --- カラーピッカー関連 ---
+            let pickerMode = 'click', isDragging = false;
+            const imageLoader = document.getElementById('image-loader'), canvas = document.getElementById('image-canvas'), ctx = canvas.getContext('2d');
+            const pickerModeRadios = document.querySelectorAll('input[name="picker-mode"]');
+            const touchOffsetEnabled = document.getElementById('touch-offset-enabled'), touchOffsetValue = document.getElementById('touch-offset-value'), touchMarker = document.getElementById('touch-marker');
+
+            pickerModeRadios.forEach(radio => radio.addEventListener('change', (e) => { pickerMode = e.target.value; }));
+            imageLoader.addEventListener('change', (e) => {
+                const file = e.target.files[0]; if (!file) return; const reader = new FileReader();
+                reader.onload = (event) => { const img = new Image(); img.onload = () => { canvas.width = img.width; canvas.height = img.height; ctx.drawImage(img, 0, 0); }; img.src = event.target.result; };
+                reader.readAsDataURL(file);
+            });
+
+            function getPixelColor(clientX, clientY) {
+                const rect = canvas.getBoundingClientRect();
+                const x = Math.floor(clientX - rect.left), y = Math.floor(clientY - rect.top);
+                if (x < 0 || x >= canvas.width || y < 0 || y >= canvas.height) return null;
+                const pixel = ctx.getImageData(x, y, 1, 1).data;
+                return { r: pixel[0], g: pixel[1], b: pixel[2] };
             }
 
-            htmlEditor.on('change', updatePreview);
-            cssEditor.on('change', updatePreview);
-            jsEditor.on('change', updatePreview);
-
-            window.showMainView = function(viewName) {
-                document.querySelectorAll('.main-view').forEach(v => v.classList.remove('active'));
-                document.querySelectorAll('.main-tab-button').forEach(b => b.classList.remove('active'));
-                document.getElementById(`${viewName}-view`).classList.add('active');
-                document.querySelector(`.main-tab-button[onclick="showMainView('${viewName}')"]`).classList.add('active');
+            function updateColorInfo(prefix, color) { const { r, g, b } = color; const hex = rgbToHex(r, g, b); const rgb = `rgb(${r}, ${g}, ${b})`; document.getElementById(`${prefix}-color-preview`).style.backgroundColor = hex; document.getElementById(`${prefix}-hex-code`).value = hex; document.getElementById(`${prefix}-rgb-code`).value = rgb; }
+            
+            function handleInteractionStart(e) { isDragging = true; if (pickerMode === 'drag') handleInteractionMove(e); }
+            function handleInteractionEnd(e) { if (pickerMode === 'click' && isDragging) { const coords = getEventCoords(e); const color = getPixelColor(coords.clientX, coords.clientY); if (color) { updateColorInfo('selected', color); showToast(`選択色 ${rgbToHex(color.r, color.g, color.b)} をセットしました`); } } isDragging = false; touchMarker.style.display = 'none'; }
+            function handleInteractionMove(e) {
+                const coords = getEventCoords(e);
+                const color = getPixelColor(coords.clientX, coords.clientY); if (!color) return;
+                updateColorInfo('hover', color);
+                if (isDragging && pickerMode === 'drag') updateColorInfo('selected', color);
             }
             
-            window.showEditor = function(editorName) {
-                document.querySelectorAll('.editor-wrapper').forEach(w => w.classList.remove('active'));
-                document.querySelectorAll('.code-tab-button').forEach(b => b.classList.remove('active'));
-                document.getElementById(`${editorName}-editor-wrapper`).classList.add('active');
-                document.querySelector(`.code-tab-button[onclick="showEditor('${editorName}')"]`).classList.add('active');
-                if (editorName === 'html') htmlEditor.refresh(); if (editorName === 'css') cssEditor.refresh(); if (editorName === 'js') jsEditor.refresh();
-            }
-            
-            function setupInspectorListeners() {
-                const previewBody = document.getElementById('preview-frame').contentWindow.document.body;
-                if (!previewBody) return;
-                previewBody.addEventListener('click', (e) => {
-                    e.preventDefault(); e.stopPropagation();
-                    if (lastHighlightedElement) lastHighlightedElement.style.outline = '';
-                    selectedElement = e.target;
-                    selectedElement.style.outline = '2px solid var(--primary-color)';
-                    lastHighlightedElement = selectedElement;
-                    populateInspector(selectedElement);
-                });
-            }
-
-            function getCssSelector(el) {
-                if (!(el instanceof Element)) return;
-                let path = [];
-                while (el.nodeType === Node.ELEMENT_NODE) {
-                    let selector = el.nodeName.toLowerCase();
-                    if (el.id) { selector = '#' + el.id; path.unshift(selector); break; } 
-                    else {
-                        let sib = el, nth = 1;
-                        while (sib = sib.previousElementSibling) { if (sib.nodeName.toLowerCase() == selector) nth++; }
-                        if (nth != 1) selector += `:nth-of-type(${nth})`;
-                    }
-                    path.unshift(selector);
-                    el = el.parentNode;
+            function getEventCoords(e, applyOffset = false) {
+                let clientX, clientY;
+                if (e.touches && e.touches.length > 0) { clientX = e.touches[0].clientX; clientY = e.touches[0].clientY; } else { clientX = e.clientX; clientY = e.clientY; }
+                if (applyOffset) {
+                    const offset = parseInt(touchOffsetValue.value, 10) || 0;
+                    clientY -= offset;
+                    const rect = canvas.getBoundingClientRect();
+                    touchMarker.style.left = `${clientX - rect.left}px`;
+                    touchMarker.style.top = `${clientY - rect.top}px`;
                 }
-                return path.join(" > ");
+                return { clientX, clientY };
             }
 
-            function populateInspector(element) {
-                document.getElementById('inspector-placeholder').style.display = 'none';
-                document.getElementById('inspector-ui').style.display = 'block';
+            // Mouse Events
+            canvas.addEventListener('mousedown', handleInteractionStart);
+            canvas.addEventListener('mouseup', handleInteractionEnd);
+            canvas.addEventListener('mousemove', handleInteractionMove);
+            canvas.addEventListener('mouseleave', () => { isDragging = false; });
 
-                const styles = window.getComputedStyle(element);
-                originalStyles = {
-                    color: styles.color, backgroundColor: styles.backgroundColor, padding: styles.padding,
-                    margin: styles.margin, fontSize: styles.fontSize
-                };
+            // Touch Events
+            canvas.addEventListener('touchstart', (e) => { e.preventDefault(); isDragging = true; touchMarker.style.display = 'block'; handleTouchInteraction(e); });
+            canvas.addEventListener('touchend', (e) => { e.preventDefault(); handleInteractionEnd(e); });
+            canvas.addEventListener('touchcancel', (e) => { e.preventDefault(); handleInteractionEnd(e); });
+            canvas.addEventListener('touchmove', (e) => { e.preventDefault(); if (isDragging) handleTouchInteraction(e); });
 
-                document.getElementById('selected-element-selector').textContent = getCssSelector(element);
-                document.getElementById('inspector-textContent').value = element.innerText;
-                document.getElementById('inspector-color-text').value = styles.color;
-                document.getElementById('inspector-color-picker').value = rgbToHex(styles.color);
-                document.getElementById('inspector-bgColor-text').value = styles.backgroundColor;
-                document.getElementById('inspector-bgColor-picker').value = rgbToHex(styles.backgroundColor);
-                document.getElementById('inspector-padding').value = styles.padding;
-                document.getElementById('inspector-margin').value = styles.margin;
-                document.getElementById('inspector-fontSize').value = styles.fontSize;
+            function handleTouchInteraction(e) {
+                const useOffset = touchOffsetEnabled.checked;
+                const coords = getEventCoords(e, useOffset);
+                const color = getPixelColor(coords.clientX, coords.clientY);
+                if (!color) return;
+                updateColorInfo('hover', color);
+                if (pickerMode === 'drag') updateColorInfo('selected', color);
             }
 
-            function applyStyleChange(property, value) {
-                if (!selectedElement) return;
-                selectedElement.style[property] = value;
-                const selector = getCssSelector(selectedElement);
-                let cssCode = cssEditor.getValue();
-                const cssProperty = property.replace(/([A-Z])/g, '-$1').toLowerCase();
-                const regex = new RegExp(`(${selector.replace(/[\/\\^$*+?.()|[\]{}]/g, '\\$&')})\\s*\\{([^}]*)\\}`, 's');
-                const match = cssCode.match(regex);
-                if (match) {
-                    let properties = match[2]; const propRegex = new RegExp(`(^|;)\\s*${cssProperty}\\s*:[^;]+`, 'i');
-                    if (propRegex.test(properties)) { cssCode = cssCode.replace(match[0], `${selector} {${properties.replace(propRegex, `$1 ${cssProperty}: ${value}`)}}`); } 
-                    else { const trimmed = properties.trim(); const newProps = trimmed + (trimmed.endsWith(';') || trimmed === '' ? '' : ';') + ` ${cssProperty}: ${value}; `; cssCode = cssCode.replace(match[0], `${selector} {\n${newProps}\n}`); }
-                } else { cssCode += `\n\n${selector} {\n    ${cssProperty}: ${value};\n}`; }
-                cssEditor.setValue(cssCode);
-            }
+            ['hover-hex-code', 'hover-rgb-code', 'selected-hex-code', 'selected-rgb-code'].forEach(id => {
+                document.getElementById(id).addEventListener('click', (e) => { if(e.target.value && e.target.value !== '-') { navigator.clipboard.writeText(e.target.value).then(() => showToast(`「${e.target.value}」をコピーしました`)); } });
+            });
+            function rgbToHex(r, g, b) { const toHex = c => ('0' + c.toString(16)).slice(-2); return `#${toHex(r)}${toHex(g)}${toHex(b)}`.toUpperCase(); }
+            function showToast(message) { const toast = document.getElementById('toast'); toast.textContent = message; toast.classList.add('show'); setTimeout(() => { toast.classList.remove('show'); }, 2000); }
 
-            function applyTextChange(newText) {
-                if (!selectedElement) return;
-                const selector = getCssSelector(selectedElement);
-                const htmlString = htmlEditor.getValue();
-                
-                const parser = new DOMParser();
-                const doc = parser.parseFromString(`<body>${htmlString}</body>`, 'text/html');
-                const targetNode = doc.querySelector(selector);
-
-                if (targetNode) {
-                    targetNode.innerText = newText;
-                    htmlEditor.setValue(doc.body.innerHTML);
-                } else {
-                    console.warn('HTMLソースコード内の要素特定に失敗しました。');
-                }
-            }
-
-            function setupInspectorInputEvents() {
-                const colorText = document.getElementById('inspector-color-text'), colorPicker = document.getElementById('inspector-color-picker');
-                colorText.addEventListener('change', (e) => { applyStyleChange('color', e.target.value); colorPicker.value = rgbToHex(e.target.value); });
-                colorPicker.addEventListener('input', (e) => { colorText.value = e.target.value; applyStyleChange('color', e.target.value); });
-
-                const bgColorText = document.getElementById('inspector-bgColor-text'), bgColorPicker = document.getElementById('inspector-bgColor-picker');
-                bgColorText.addEventListener('change', (e) => { applyStyleChange('backgroundColor', e.target.value); bgColorPicker.value = rgbToHex(e.target.value); });
-                bgColorPicker.addEventListener('input', (e) => { bgColorText.value = e.target.value; applyStyleChange('backgroundColor', e.target.value); });
-                
-                document.getElementById('inspector-padding').addEventListener('change', (e) => applyStyleChange('padding', e.target.value));
-                document.getElementById('inspector-margin').addEventListener('change', (e) => applyStyleChange('margin', e.target.value));
-                document.getElementById('inspector-fontSize').addEventListener('change', (e) => applyStyleChange('fontSize', e.target.value));
-
-                const textContentArea = document.getElementById('inspector-textContent');
-                textContentArea.addEventListener('input', (e) => { if (selectedElement) selectedElement.innerText = e.target.value; });
-                textContentArea.addEventListener('change', (e) => applyTextChange(e.target.value));
-
-                document.getElementById('inspector-ui').addEventListener('click', (e) => {
-                    if (e.target.classList.contains('revert-btn')) {
-                        const property = e.target.dataset.property;
-                        const originalValue = originalStyles[property];
-                        if (originalValue === undefined) return;
-
-                        const inputIds = e.target.dataset.inputs.split(',');
-                        inputIds.forEach(id => {
-                            const inputEl = document.getElementById(id);
-                            if (inputEl.type === 'color') inputEl.value = rgbToHex(originalValue);
-                            else inputEl.value = originalValue;
-                        });
-                        
-                        applyStyleChange(property, originalValue);
-                    }
-                });
-            }
             setupInspectorInputEvents();
-
-            function rgbToHex(colorStr) {
-                const tempEl = document.createElement('div');
-                tempEl.style.color = colorStr; document.body.appendChild(tempEl);
-                const computedColor = window.getComputedStyle(tempEl).color;
-                document.body.removeChild(tempEl);
-                if (!computedColor || computedColor.indexOf('rgb') === -1) return '#000000';
-                const match = computedColor.match(/\d+/g); if (!match) return '#000000';
-                const [r, g, b] = match.map(Number);
-                return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1).toUpperCase();
-            }
-
             updatePreview();
         });
     </script>
