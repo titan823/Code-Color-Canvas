@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Webアプリパレット</title>
-    
-    <!-- CodeMirrorのCSSとJSをCDNから読み込む -->
+    <title>Code Color Canvas - ライブWebエディタ</title>
+
+    <!-- CodeMirror（CDN） -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/theme/material-darker.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.js"></script>
@@ -14,130 +14,145 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/javascript/javascript.min.js"></script>
 
     <style>
-        /* --- アプリ全体のスタイル --- */
+        /* 全体 */
         :root {
-            --primary-color: #007acc;
-            --bg-color: #1e1e1e;
-            --panel-bg-color: #252526;
-            --header-bg-color: #333;
-            --border-color: #444;
-            --text-color: #d4d4d4;
-            --text-color-light: #ffffff;
-            --input-bg-color: #3c3c3c;
-            --input-border-color: #555;
+            --bg: #1e1e1e;
+            --panel: #252526;
+            --panel-2: #2d2d2d;
+            --panel-3: #333;
+            --border-1: #444;
+            --accent: #007acc;
+            --text: #d4d4d4;
+            --muted: #aaaaaa;
+            --ok: #7bd88f;
+            --ng: #f26d6d;
         }
-
+        * { box-sizing: border-box; }
+        html, body { height: 100%; }
         body {
             margin: 0;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Hiragino Kaku Gothic ProN', 'Meiryo', sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-color);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
             display: flex;
             flex-direction: column;
-            height: 100vh;
-            overflow: hidden;
+            min-height: 100vh;
         }
-
         header {
-            background-color: var(--header-bg-color);
+            background-color: var(--panel-3);
             padding: 10px 20px;
             font-size: 1.2em;
             font-weight: bold;
-            border-bottom: 2px solid var(--primary-color);
+            border-bottom: 2px solid var(--accent);
+        }
+
+        /* 上位タブ（編集 / プレビュー） */
+        .main-container {
             display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .main-tabs {
-            flex-shrink: 0;
-        }
-
-        .main-tab-button {
-            padding: 8px 16px;
-            border: 1px solid var(--border-color);
-            border-bottom: none;
-            background-color: var(--panel-bg-color);
-            color: var(--text-color);
-            cursor: pointer;
-            border-radius: 4px 4px 0 0;
-            margin-right: 5px;
-            font-size: 0.9em;
-        }
-
-        .main-tab-button.active {
-            background-color: var(--primary-color);
-            color: var(--text-color-light);
-            border-color: var(--primary-color);
-        }
-
-        .main-content {
-            flex-grow: 1;
-            position: relative;
-        }
-
-        .main-view {
-            display: none;
-            height: 100%;
-            width: 100%;
-            position: absolute;
-        }
-
-        .main-view.active {
-            display: flex; /* 子要素のレイアウトのため */
-        }
-        
-        /* --- コード編集ビュー --- */
-        #code-view {
             flex-direction: column;
+            flex: 1;
+            min-height: 0;
         }
-        
-        .code-tabs {
+        .top-tabs {
             display: flex;
-            background-color: var(--bg-color);
-            flex-shrink: 0;
+            background-color: var(--bg);
+            border-bottom: 2px solid var(--border-1);
         }
-        .code-tab-button {
-            padding: 10px 15px;
+        .top-tab-button {
+            padding: 10px 16px;
             border: none;
-            background-color: #2d2d2d;
-            color: var(--text-color);
+            background-color: var(--panel-2);
+            color: #ccc;
             cursor: pointer;
             border-bottom: 3px solid transparent;
         }
-        .code-tab-button.active {
-            background-color: var(--header-bg-color);
-            color: var(--text-color-light);
-            border-bottom: 3px solid var(--primary-color);
+        .top-tab-button + .top-tab-button {
+            border-left: 1px solid var(--border-1);
+        }
+        .top-tab-button.active {
+            background-color: var(--panel-3);
+            color: white;
+            border-bottom: 3px solid var(--accent);
+        }
+
+        .page-container {
+            position: relative;
+            flex: 1;
+            min-height: 0;
+        }
+        .tab-page {
+            position: absolute;
+            inset: 0;
+            display: none;
+        }
+        .tab-page.active {
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+        }
+
+        /* パネル */
+        .panel-header {
+            background-color: var(--panel-3);
+            padding: 8px 12px;
+            font-weight: bold;
+            border-bottom: 1px solid var(--border-1);
+        }
+        .panel {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            min-height: 0;
+        }
+
+        /* コードエディタ */
+        .code-tabs {
+            display: flex;
+            background-color: var(--bg);
+            border-bottom: 1px solid var(--border-1);
+        }
+        .tab-button {
+            padding: 10px 15px;
+            border: none;
+            background-color: var(--panel-2);
+            color: #ccc;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+        }
+        .tab-button.active {
+            background-color: var(--panel-3);
+            color: white;
+            border-bottom: 3px solid var(--accent);
         }
         .editor-container {
-            flex-grow: 1;
+            flex: 1;
             position: relative;
+            min-height: 0;
         }
         .CodeMirror {
             position: absolute;
-            top: 0;
-            left: 0;
+            inset: 0;
             width: 100%;
             height: 100% !important;
             font-size: 14px;
         }
-        .editor-wrapper { display: none; height: 100%; }
-        .editor-wrapper.active { display: block; }
-        
-        /* --- プレビュー＆編集ビュー --- */
-        #preview-view {
-            flex-direction: column;
+        .editor-wrapper {
+            display: none;
+            height: 100%;
         }
-        .panel-header {
-            background-color: var(--header-bg-color);
-            padding: 8px 12px;
-            font-weight: bold;
-            flex-shrink: 0;
+        .editor-wrapper.active {
+            display: block;
+        }
+
+        /* プレビュー＆インスペクター */
+        .preview-inspector-panel {
+            flex: 1;
+            min-height: 0;
+            border-left: none;
         }
         .preview-panel {
-            flex-grow: 1;
-            min-height: 50%;
+            height: 65%;
+            min-height: 120px;
         }
         #preview-frame {
             width: 100%;
@@ -147,349 +162,494 @@
         }
         .inspector-panel {
             height: 35%;
-            min-height: 200px;
-            background-color: var(--panel-bg-color);
-            border-top: 2px solid var(--border-color);
+            background-color: var(--panel);
+            border-top: 2px solid var(--border-1);
             padding: 15px;
             overflow-y: auto;
+        }
+        .inspector-panel h3 {
+            margin: 0 0 10px 0;
+            padding-bottom: 5px;
+            border-bottom: 1px solid var(--border-1);
+            font-size: 1em;
+            color: #fff;
         }
         .inspector-item {
             margin-bottom: 12px;
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
+            flex-wrap: wrap;
         }
         .inspector-item label {
-            width: 100px;
+            min-width: 120px;
             font-size: 0.9em;
-            flex-shrink: 0;
+            color: var(--muted);
         }
         .inspector-item input[type="text"] {
-            flex-grow: 1;
-            background-color: var(--input-bg-color);
-            border: 1px solid var(--input-border-color);
-            color: var(--text-color);
-            padding: 5px;
+            background-color: #3c3c3c;
+            border: 1px solid #555;
+            color: #f0f0f0;
+            padding: 6px 8px;
             border-radius: 3px;
+            flex: 1 1 240px;
         }
-        .inspector-item input[type="color"] {
-            padding: 0;
-            border: none;
-            background: none;
-            width: 28px;
-            height: 28px;
-            cursor: pointer;
+        .color-swatch {
+            width: 18px;
+            height: 18px;
+            border: 1px solid #555;
+            border-radius: 3px;
+            background: transparent;
+        }
+        .validity-badge {
+            font-size: 12px;
+            padding: 2px 6px;
+            border-radius: 10px;
+            border: 1px solid #555;
+            color: #ddd;
+        }
+        .validity-badge.ok {
+            border-color: #2e7d32;
+            color: var(--ok);
+        }
+        .validity-badge.ng {
+            border-color: #8e2a2a;
+            color: var(--ng);
         }
 
+        /* プレースホルダー */
+        #inspector-placeholder {
+            color: #aaa;
+            margin: 6px 0 0 0;
+        }
     </style>
 </head>
 <body>
-    <header>
-        Webアプリパレット
-        <div class="main-tabs">
-            <button class="main-tab-button active" onclick="showMainView('code')">コード編集</button>
-            <button class="main-tab-button" onclick="showMainView('preview')">プレビュー＆編集</button>
-        </div>
-    </header>
+    <header>Code Color Canvas</header>
 
-    <main class="main-content">
-        <!-- コード編集ビュー -->
-        <div id="code-view" class="main-view active">
-            <div class="code-tabs">
-                <button class="code-tab-button active" onclick="showEditor('html')">HTML</button>
-                <button class="code-tab-button" onclick="showEditor('css')">CSS</button>
-                <button class="code-tab-button" onclick="showEditor('js')">JavaScript</button>
-            </div>
-            <div class="editor-container">
-                <div id="html-editor-wrapper" class="editor-wrapper active"><textarea id="html-code"></textarea></div>
-                <div id="css-editor-wrapper" class="editor-wrapper"><textarea id="css-code"></textarea></div>
-                <div id="js-editor-wrapper" class="editor-wrapper"><textarea id="js-code"></textarea></div>
-            </div>
+    <main class="main-container">
+        <!-- 上位タブ -->
+        <div class="top-tabs">
+            <button class="top-tab-button active" onclick="showMainTab('code')">コード編集</button>
+            <button class="top-tab-button" onclick="showMainTab('preview')">プレビュー・変更</button>
         </div>
 
-        <!-- プレビュー＆編集ビュー -->
-        <div id="preview-view" class="main-view">
-            <div class="panel-header">プレビュー</div>
-            <div class="preview-panel">
-                <iframe id="preview-frame"></iframe>
-            </div>
-            <div class="inspector-panel">
-                <div class="panel-header">インスペクター</div>
-                <div id="inspector-content">
-                    <p id="inspector-placeholder">プレビュー上の要素をクリックして選択してください。</p>
-                    <div id="inspector-ui" style="display: none;">
-                        <div class="inspector-item">
-                            <label>セレクタ</label>
-                            <b id="selected-element-selector"></b>
+        <div class="page-container">
+            <!-- コード編集タブ -->
+            <section id="code-page" class="tab-page active">
+                <div class="panel code-panel">
+                    <div class="panel-header">コード編集</div>
+                    <div class="code-tabs">
+                        <button class="tab-button active" onclick="showEditor('html')">HTML</button>
+                        <button class="tab-button" onclick="showEditor('css')">CSS</button>
+                        <button class="tab-button" onclick="showEditor('js')">JavaScript</button>
+                    </div>
+                    <div class="editor-container">
+                        <div id="html-editor-wrapper" class="editor-wrapper active">
+                            <textarea id="html-code"></textarea>
                         </div>
-                        <div class="inspector-item">
-                            <label for="color">文字色</label>
-                            <input type="text" id="inspector-color-text">
-                            <input type="color" id="inspector-color-picker">
+                        <div id="css-editor-wrapper" class="editor-wrapper">
+                            <textarea id="css-code"></textarea>
                         </div>
-                        <div class="inspector-item">
-                            <label for="bgColor">背景色</label>
-                            <input type="text" id="inspector-bgColor-text">
-                            <input type="color" id="inspector-bgColor-picker">
-                        </div>
-                        <div class="inspector-item">
-                            <label for="padding">パディング</label>
-                            <input type="text" id="inspector-padding" placeholder="例: 10px または 5px 10px">
-                        </div>
-                        <div class="inspector-item">
-                            <label for="margin">マージン</label>
-                            <input type="text" id="inspector-margin" placeholder="例: 10px auto">
-                        </div>
-                         <div class="inspector-item">
-                            <label for="fontSize">フォントサイズ</label>
-                            <input type="text" id="inspector-fontSize" placeholder="例: 16px">
+                        <div id="js-editor-wrapper" class="editor-wrapper">
+                            <textarea id="js-code"></textarea>
                         </div>
                     </div>
                 </div>
-            </div>
+            </section>
+
+            <!-- プレビュ・変更タブ -->
+            <section id="preview-page" class="tab-page">
+                <div class="panel preview-inspector-panel">
+                    <div class="preview-panel">
+                        <div class="panel-header">プレビュー</div>
+                        <iframe id="preview-frame"></iframe>
+                    </div>
+                    <div class="inspector-panel">
+                        <div class="panel-header">インスペクター</div>
+                        <div id="inspector-content">
+                            <p id="inspector-placeholder">プレビュー内の要素をクリックすると、ここでスタイルを編集できます。</p>
+                            <div id="inspector-ui" style="display: none;">
+                                <div class="inspector-item">
+                                    <label>選択中の要素</label>
+                                    <b id="selected-element-selector"></b>
+                                </div>
+
+                                <div class="inspector-item">
+                                    <label for="inspector-color">テキスト色</label>
+                                    <input type="text" id="inspector-color" placeholder="例: #ff8800, #ff880080, rgb(255 136 0 / 80%), hsl(30 100% 50%), rebeccapurple, color(display-p3 1 0.5 0)">
+                                    <span class="color-swatch" id="swatch-color"></span>
+                                    <span class="validity-badge" id="valid-color">未入力</span>
+                                </div>
+
+                                <div class="inspector-item">
+                                    <label for="inspector-bg">背景色</label>
+                                    <input type="text" id="inspector-bg" placeholder="例: transparent, #222, rgba(0 0 0 / .4), lch(50 60 40)">
+                                    <span class="color-swatch" id="swatch-bg"></span>
+                                    <span class="validity-badge" id="valid-bg">未入力</span>
+                                </div>
+
+                                <div class="inspector-item">
+                                    <label for="inspector-padding">パディング</label>
+                                    <input type="text" id="inspector-padding" placeholder="例: 10px / 8px 12px / 1rem 2rem">
+                                </div>
+
+                                <div class="inspector-item">
+                                    <label for="inspector-margin">マージン</label>
+                                    <input type="text" id="inspector-margin" placeholder="例: 10px auto / 0 16px">
+                                </div>
+
+                                <div class="inspector-item">
+                                    <label for="inspector-fontSize">フォントサイズ</label>
+                                    <input type="text" id="inspector-fontSize" placeholder="例: 16px / 1.2rem / clamp(14px, 2vw, 20px)">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
         </div>
     </main>
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // --- グローバル変数 ---
+            // --- グローバル ---
             let selectedElement = null;
             let lastHighlightedElement = null;
 
-            // --- CodeMirrorエディタの初期化 ---
-            const htmlEditor = CodeMirror.fromTextArea(document.getElementById('html-code'), { mode: 'xml', htmlMode: true, theme: 'material-darker', lineNumbers: true });
-            const cssEditor = CodeMirror.fromTextArea(document.getElementById('css-code'), { mode: 'css', theme: 'material-darker', lineNumbers: true });
-            const jsEditor = CodeMirror.fromTextArea(document.getElementById('js-code'), { mode: 'javascript', theme: 'material-darker', lineNumbers: true });
+            // --- CodeMirror 初期化 ---
+            const htmlEditor = CodeMirror.fromTextArea(document.getElementById('html-code'), {
+                mode: 'xml',
+                htmlMode: true,
+                theme: 'material-darker',
+                lineNumbers: true,
+            });
+            const cssEditor = CodeMirror.fromTextArea(document.getElementById('css-code'), {
+                mode: 'css',
+                theme: 'material-darker',
+                lineNumbers: true,
+            });
+            const jsEditor = CodeMirror.fromTextArea(document.getElementById('js-code'), {
+                mode: 'javascript',
+                theme: 'material-darker',
+                lineNumbers: true,
+            });
 
-            // --- 初期コードの設定 ---
-            const initialHTML = `<!-- ここにHTMLを記述します -->
-<div class="container">
-    <h1 id="main-title">Webアプリパレットへようこそ！</h1>
-    <p>このテキストやボタンを編集してみましょう。</p>
-    <button id="action-btn">クリック！</button>
+            // --- 初期コード（HTMLは<body>内に入る想定） ---
+            const initialHTML = `<div class="container">
+  <h1 id="main-title">Code Color Canvasへようこそ！</h1>
+  <p>ここにあるテキストやスタイルを自由に編集できます。</p>
+  <button id="action-btn">クリック</button>
 </div>`;
-            const initialCSS = `/* ここにCSSを記述します */
+            const initialCSS = `/* ページ全体のスタイル */
+html, body {
+  height: 100%;
+}
 body {
-    font-family: sans-serif;
-    background-color: #f0f0f0;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
-    margin: 0;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans JP", "Hiragino Kaku Gothic ProN", Meiryo, sans-serif;
+  background-color: #f0f0f0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 0;
 }
 
 .container {
-    text-align: center;
-    padding: 40px;
-    background-color: white;
-    border-radius: 8px;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  text-align: center;
+  padding: 40px;
+  background-color: white;
+  border-radius: 12px;
+  box-shadow: 0 6px 16px rgba(0,0,0,0.12);
 }
 
 #main-title {
-    color: #333;
+  color: #333;
+  margin: 0 0 10px 0;
 }
 
 #action-btn {
-    background-color: #007acc;
-    color: white;
-    border: none;
-    padding: 10px 20px;
-    border-radius: 5px;
-    cursor: pointer;
-    font-size: 16px;
+  background-color: #007acc;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 16px;
 }`;
-            const initialJS = `// ここにJavaScriptを記述します
-document.getElementById('action-btn').addEventListener('click', () => {
-    alert('ボタンがクリックされました！');
+            const initialJS = `document.getElementById('action-btn')?.addEventListener('click', (e) => {
+  alert('ボタンがクリックされました！');
 });`;
 
             htmlEditor.setValue(initialHTML);
             cssEditor.setValue(initialCSS);
             jsEditor.setValue(initialJS);
-            
-            // --- プレビュー更新機能 ---
-            function updatePreview() {
-                const previewFrame = document.getElementById('preview-frame');
-                const preview =  previewFrame.contentDocument ||  previewFrame.contentWindow.document;
-                
-                const fullHTML = `<!DOCTYPE html><html><head><style>${cssEditor.getValue()}</style></head><body>${htmlEditor.getValue()}<script>${jsEditor.getValue()}<\/script></body></html>`;
-                
-                preview.open();
-                preview.write(fullHTML);
-                preview.close();
 
-                // プレビューが更新されたら、インスペクター用のイベントリスナーを再設定
+            // --- 上位タブの切替 ---
+            window.showMainTab = function(name) {
+                document.querySelectorAll('.top-tab-button').forEach(btn => btn.classList.remove('active'));
+                document.querySelectorAll('.tab-page').forEach(p => p.classList.remove('active'));
+                if (name === 'code') {
+                    document.querySelector(`.top-tab-button[onclick="showMainTab('code')"]`).classList.add('active');
+                    document.getElementById('code-page').classList.add('active');
+                    // CodeMirror のサイズ再計算
+                    htmlEditor.refresh();
+                    cssEditor.refresh();
+                    jsEditor.refresh();
+                } else {
+                    document.querySelector(`.top-tab-button[onclick="showMainTab('preview')"]`).classList.add('active');
+                    document.getElementById('preview-page').classList.add('active');
+                }
+            };
+
+            // --- サブタブ（HTML/CSS/JS） ---
+            window.showEditor = function(editorName) {
+                document.querySelectorAll('.editor-wrapper').forEach(w => w.classList.remove('active'));
+                document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
+
+                document.getElementById(`${editorName}-editor-wrapper`).classList.add('active');
+                document.querySelector(`.tab-button[onclick="showEditor('${editorName}')"]`).classList.add('active');
+
+                if (editorName === 'html') htmlEditor.refresh();
+                if (editorName === 'css') cssEditor.refresh();
+                if (editorName === 'js') jsEditor.refresh();
+            };
+
+            // --- プレビュー更新 ---
+            function updatePreview() {
+                const iframe = document.getElementById('preview-frame');
+                const doc = iframe.contentDocument || iframe.contentWindow.document;
+
+                const htmlCode = htmlEditor.getValue();
+                const cssCode = cssEditor.getValue();
+                const jsCode = jsEditor.getValue();
+
+                doc.open();
+                doc.write(`<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>${cssCode}</style>
+</head>
+<body>
+${htmlCode}
+<script>(function(){\n${jsCode}\n})();<\/script>
+</body>
+</html>`);
+                doc.close();
+
+                // プレビュー再構築後にイベントを再設定
                 setupInspectorListeners();
+                // 選択中の状態をリセット
+                selectedElement = null;
+                lastHighlightedElement = null;
+                showInspectorPlaceholder();
             }
 
             htmlEditor.on('change', updatePreview);
             cssEditor.on('change', updatePreview);
             jsEditor.on('change', updatePreview);
 
-            // --- メインビューのタブ切り替え機能 ---
-            window.showMainView = function(viewName) {
-                document.querySelectorAll('.main-view').forEach(v => v.classList.remove('active'));
-                document.querySelectorAll('.main-tab-button').forEach(b => b.classList.remove('active'));
-
-                document.getElementById(`${viewName}-view`).classList.add('active');
-                document.querySelector(`.main-tab-button[onclick="showMainView('${viewName}')"]`).classList.add('active');
-            }
-            
-            // --- コードエディタのタブ切り替え機能 ---
-            window.showEditor = function(editorName) {
-                document.querySelectorAll('.editor-wrapper').forEach(w => w.classList.remove('active'));
-                document.querySelectorAll('.code-tab-button').forEach(b => b.classList.remove('active'));
-
-                document.getElementById(`${editorName}-editor-wrapper`).classList.add('active');
-                document.querySelector(`.code-tab-button[onclick="showEditor('${editorName}')"]`).classList.add('active');
-                
-                if (editorName === 'html') htmlEditor.refresh();
-                if (editorName === 'css') cssEditor.refresh();
-                if (editorName === 'js') jsEditor.refresh();
-            }
-            
-            // --- インスペクター機能 ---
+            // --- インスペクター関連 ---
             function setupInspectorListeners() {
-                const previewBody = document.getElementById('preview-frame').contentWindow.document.body;
-                if (!previewBody) return;
+                const iframe = document.getElementById('preview-frame');
+                const pdoc = iframe.contentDocument || iframe.contentWindow.document;
+                const pbody = pdoc && pdoc.body;
+                if (!pbody) return;
 
-                previewBody.addEventListener('click', (e) => {
+                // 既存のハンドラ衝突を避けるため、一旦クローンして差し替える方法もあるが、
+                // ここでは単純にクリックを新たに委任
+                pbody.addEventListener('click', (e) => {
                     e.preventDefault();
                     e.stopPropagation();
 
-                    if (lastHighlightedElement) lastHighlightedElement.style.outline = '';
+                    if (lastHighlightedElement) {
+                        lastHighlightedElement.style.outline = '';
+                    }
+
                     selectedElement = e.target;
                     selectedElement.style.outline = '2px solid #007acc';
                     lastHighlightedElement = selectedElement;
+
                     populateInspector(selectedElement);
-                });
+                }, { capture: true });
             }
 
             function getCssSelector(el) {
-                if (!(el instanceof Element)) return;
-                let path = [];
-                while (el.nodeType === Node.ELEMENT_NODE) {
+                // クロスドキュメントでも動くよう instanceof は使わない
+                if (!el || el.nodeType !== 1) return '';
+                const parts = [];
+                while (el && el.nodeType === 1) {
                     let selector = el.nodeName.toLowerCase();
                     if (el.id) {
                         selector = '#' + el.id;
-                        path.unshift(selector);
+                        parts.unshift(selector);
                         break;
                     } else {
+                        // クラスがあれば最初の1つだけ付与（簡易）
+                        if (el.classList && el.classList.length) {
+                            selector += '.' + el.classList[0];
+                        }
+                        // 同タイプの順序
                         let sib = el, nth = 1;
                         while (sib = sib.previousElementSibling) {
-                            if (sib.nodeName.toLowerCase() == selector) nth++;
+                            if (sib.nodeName.toLowerCase() === el.nodeName.toLowerCase()) nth++;
                         }
-                        if (nth != 1) selector += `:nth-of-type(${nth})`;
+                        if (nth !== 1) selector += `:nth-of-type(${nth})`;
                     }
-                    path.unshift(selector);
+                    parts.unshift(selector);
                     el = el.parentNode;
                 }
-                return path.join(" > ");
+                return parts.join(' > ');
+            }
+
+            function showInspectorPlaceholder() {
+                document.getElementById('inspector-placeholder').style.display = 'block';
+                document.getElementById('inspector-ui').style.display = 'none';
             }
 
             function populateInspector(element) {
                 document.getElementById('inspector-placeholder').style.display = 'none';
                 document.getElementById('inspector-ui').style.display = 'block';
 
-                const styles = window.getComputedStyle(element);
-                
-                document.getElementById('selected-element-selector').textContent = getCssSelector(element);
-                
-                // カラープロパティ
-                document.getElementById('inspector-color-text').value = styles.color;
-                document.getElementById('inspector-color-picker').value = rgbToHex(styles.color);
-                document.getElementById('inspector-bgColor-text').value = styles.backgroundColor;
-                document.getElementById('inspector-bgColor-picker').value = rgbToHex(styles.backgroundColor);
+                const iframe = document.getElementById('preview-frame');
+                const pwin = iframe.contentWindow;
 
-                // その他のプロパティ
-                document.getElementById('inspector-padding').value = styles.padding;
-                document.getElementById('inspector-margin').value = styles.margin;
-                document.getElementById('inspector-fontSize').value = styles.fontSize;
+                // 計算後スタイルを取得（iframe 側の getComputedStyle を使う）
+                const styles = pwin.getComputedStyle(element);
+
+                document.getElementById('selected-element-selector').textContent = getCssSelector(element);
+
+                // カラーは計算値（例: rgb(...) / rgba(...)）をそのまま表示
+                const colorInput = document.getElementById('inspector-color');
+                const bgInput = document.getElementById('inspector-bg');
+                colorInput.value = styles.color || '';
+                bgInput.value = styles.backgroundColor || '';
+
+                // バリデーション表示とスウォッチ
+                updateColorUI('color');
+                updateColorUI('bg');
+
+                // ボックス系
+                document.getElementById('inspector-padding').value = styles.padding || '';
+                document.getElementById('inspector-margin').value = styles.margin || '';
+                document.getElementById('inspector-fontSize').value = styles.fontSize || '';
             }
 
+            // CSSコードへの反映（選択要素への即時反映＋CSSエディタ更新）
             function applyStyleChange(property, value) {
                 if (!selectedElement) return;
 
+                // 即時反映（プレビュー内の要素）
                 selectedElement.style[property] = value;
 
+                // CSSエディタへ反映
                 const selector = getCssSelector(selectedElement);
                 let cssCode = cssEditor.getValue();
+
+                // camelCase -> kebab-case
                 const cssProperty = property.replace(/([A-Z])/g, '-$1').toLowerCase();
-                const regex = new RegExp(`(${selector.replace(/[\/\\^$*+?.()|[\]{}]/g, '\\$&')})\\s*\\{([^}]*)\\}`, 's');
+
+                // セレクタルールを探す
+                const esc = selector.replace(/[\/\\^$*+?.()|[\]{}]/g, '\\$&');
+                const regex = new RegExp(`(${esc})\\s*\\{([^}]*)\\}`, 's');
                 const match = cssCode.match(regex);
-                
+
                 if (match) {
                     let properties = match[2];
-                    const propRegex = new RegExp(`(^|;)\\s*${cssProperty}\\s*:[^;]+`, 'i');
+                    const propRegex = new RegExp(`(^|;)\\s*${cssProperty}\\s*:[^;]*`, 'i');
                     if (propRegex.test(properties)) {
                         const newProperties = properties.replace(propRegex, `$1 ${cssProperty}: ${value}`);
                         cssCode = cssCode.replace(match[0], `${selector} {${newProperties}}`);
                     } else {
-                        const trimmedProps = properties.trim();
-                        const newProperties = trimmedProps + (trimmedProps.endsWith(';') || trimmedProps === '' ? '' : ';') + ` ${cssProperty}: ${value}; `;
+                        const trimmed = properties.trim();
+                        const sep = trimmed && !trimmed.endsWith(';') ? ';' : '';
+                        const newProperties = `${trimmed}${sep} ${cssProperty}: ${value}; `;
                         cssCode = cssCode.replace(match[0], `${selector} {\n${newProperties}\n}`);
                     }
                 } else {
                     cssCode += `\n\n${selector} {\n    ${cssProperty}: ${value};\n}`;
                 }
+
                 cssEditor.setValue(cssCode);
             }
 
-            // インスペクターのイベントリスナー設定
-            function setupInspectorInputEvents() {
-                // 文字色
-                const colorText = document.getElementById('inspector-color-text');
-                const colorPicker = document.getElementById('inspector-color-picker');
-                colorText.addEventListener('change', (e) => {
-                    applyStyleChange('color', e.target.value);
-                    colorPicker.value = rgbToHex(e.target.value); // ピッカーの色も同期
-                });
-                colorPicker.addEventListener('input', (e) => {
-                    colorText.value = e.target.value;
-                    applyStyleChange('color', e.target.value);
-                });
-
-                // 背景色
-                const bgColorText = document.getElementById('inspector-bgColor-text');
-                const bgColorPicker = document.getElementById('inspector-bgColor-picker');
-                bgColorText.addEventListener('change', (e) => {
-                    applyStyleChange('backgroundColor', e.target.value);
-                    bgColorPicker.value = rgbToHex(e.target.value);
-                });
-                bgColorPicker.addEventListener('input', (e) => {
-                    bgColorText.value = e.target.value;
-                    applyStyleChange('backgroundColor', e.target.value);
-                });
-                
-                // その他
-                document.getElementById('inspector-padding').addEventListener('change', (e) => applyStyleChange('padding', e.target.value));
-                document.getElementById('inspector-margin').addEventListener('change', (e) => applyStyleChange('margin', e.target.value));
-                document.getElementById('inspector-fontSize').addEventListener('change', (e) => applyStyleChange('fontSize', e.target.value));
-            }
-            setupInspectorInputEvents();
-
-            // ヘルパー関数: rgb/rgba/hex/キーワード等を#rrggbbに変換
-            function rgbToHex(colorStr) {
-                // 一時的な要素を作成して色を適用し、getComputedStyleで正規化された色を取得
-                const tempEl = document.createElement('div');
-                tempEl.style.color = colorStr;
-                document.body.appendChild(tempEl);
-                const computedColor = window.getComputedStyle(tempEl).color;
-                document.body.removeChild(tempEl);
-                
-                if (!computedColor || computedColor.indexOf('rgb') === -1) return '#000000';
-                
-                const match = computedColor.match(/\d+/g);
-                if (!match) return '#000000';
-
-                const [r, g, b] = match.map(Number);
-                return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1).toUpperCase();
+            // --- カラー入力（全CSS色表記対応：ブラウザが解釈できるものを妥当とする） ---
+            function isValidCSSColor(value) {
+                const iframe = document.getElementById('preview-frame');
+                const pwin = iframe.contentWindow;
+                try {
+                    if (pwin.CSS && typeof pwin.CSS.supports === 'function') {
+                        return pwin.CSS.supports('color', value);
+                    }
+                } catch (_) {}
+                // フォールバック
+                const opt = pwin.document.createElement('option');
+                opt.style.color = '';
+                opt.style.color = value;
+                return !!opt.style.color;
             }
 
-            // --- 初期プレビューの描画 ---
+            function updateColorUI(kind) {
+                const input = document.getElementById(kind === 'color' ? 'inspector-color' : 'inspector-bg');
+                const swatch = document.getElementById(kind === 'color' ? 'swatch-color' : 'swatch-bg');
+                const badge = document.getElementById(kind === 'color' ? 'valid-color' : 'valid-bg');
+                const val = input.value.trim();
+
+                if (!val) {
+                    swatch.style.background = 'transparent';
+                    badge.textContent = '未入力';
+                    badge.classList.remove('ok','ng');
+                    return;
+                }
+                if (isValidCSSColor(val)) {
+                    swatch.style.background = val;
+                    badge.textContent = 'OK';
+                    badge.classList.add('ok');
+                    badge.classList.remove('ng');
+                } else {
+                    swatch.style.background = 'transparent';
+                    badge.textContent = '不正';
+                    badge.classList.add('ng');
+                    badge.classList.remove('ok');
+                }
+            }
+
+            // 入力イベント: カラー
+            document.getElementById('inspector-color').addEventListener('input', (e) => {
+                const value = e.target.value.trim();
+                updateColorUI('color');
+                if (selectedElement && isValidCSSColor(value)) {
+                    applyStyleChange('color', value);
+                }
+            });
+            document.getElementById('inspector-bg').addEventListener('input', (e) => {
+                const value = e.target.value.trim();
+                updateColorUI('bg');
+                if (selectedElement && isValidCSSColor(value)) {
+                    applyStyleChange('backgroundColor', value);
+                }
+            });
+
+            // 入力イベント: ボックス系（変更確定時に反映）
+            document.getElementById('inspector-padding').addEventListener('change', (e) => {
+                const value = e.target.value.trim();
+                if (value) applyStyleChange('padding', value);
+            });
+            document.getElementById('inspector-margin').addEventListener('change', (e) => {
+                const value = e.target.value.trim();
+                if (value) applyStyleChange('margin', value);
+            });
+            document.getElementById('inspector-fontSize').addEventListener('change', (e) => {
+                const value = e.target.value.trim();
+                if (value) applyStyleChange('fontSize', value);
+            });
+
+            // --- 初期プレビュー描画 ---
             updatePreview();
+
+            // 最初はコードタブ表示
+            showMainTab('code');
         });
     </script>
 </body>
