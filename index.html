@@ -69,7 +69,7 @@
             border-bottom: 3px solid transparent;
         }
         .top-tab-button + .top-tab-button {
-            border-left: 1px solid var(--border-1);
+            border-left: 1px固 solid var(--border-1);
         }
         .top-tab-button.active {
             background-color: var(--panel-3);
@@ -248,11 +248,19 @@
             min-width: 200px; flex: 1 1 200px;
         }
         .img-toolbar input[type="file"] { color: #ddd; }
+        .img-switcher {
+            display: flex; gap: 6px; align-items: center; flex-wrap: wrap;
+            padding: 8px 12px; background: var(--panel-2); border-bottom: 1px solid var(--border-1);
+        }
+        .img-chip {
+            padding: 4px 10px; border: 1px solid #555; border-radius: 16px; background: #2f2f2f; color: #ddd; cursor: pointer;
+        }
+        .img-chip.active {
+            background: var(--accent); border-color: var(--accent); color: #fff;
+        }
         .img-stage {
             position: relative; flex: 1; min-height: 0;
-            /* チェッカーボード（透明背景の確認用） */
-            background:
-              conic-gradient(#eee 25%, #fff 0 50%, #eee 0 75%, #fff 0) 0 0 / 16px 16px;
+            background: conic-gradient(#eee 25%, #fff 0 50%, #eee 0 75%, #fff 0) 0 0 / 16px 16px;
         }
         #image-canvas {
             width: 100%; height: 100%; display: block; background: transparent;
@@ -268,44 +276,22 @@
             color: #ccc; font-size: 0.95em; text-align: center; padding: 8px; pointer-events: none;
         }
         .stage-overlay {
-            position: absolute; inset: 0; border: 2px dashed #666; border-radius: 8px; pointer-events: none;
-            margin: 8px;
+            position: absolute; inset: 0; border: 2px dashed #666; border-radius: 8px; pointer-events: none; margin: 8px;
         }
-        .panel-section-title {
-            font-weight: bold; margin: 12px 0 6px; color: #fff;
-        }
-        .current-color {
-            display: flex; align-items: center; gap: 10px;
-        }
-        .swatch-large {
-            width: 64px; height: 64px; border: 1px solid #555; border-radius: 6px; background: #000;
-        }
-        .kv-row {
-            display: flex; align-items: center; gap: 8px; margin-bottom: 8px; flex-wrap: wrap;
-        }
+        .panel-section-title { font-weight: bold; margin: 12px 0 6px; color: #fff; }
+        .current-color { display: flex; align-items: center; gap: 10px; }
+        .swatch-large { width: 64px; height: 64px; border: 1px solid #555; border-radius: 6px; background: #000; }
+        .kv-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; flex-wrap: wrap; }
         .kv-row code {
-            background: #2a2a2a; border: 1px solid #555; padding: 4px 6px; border-radius: 4px; color: #eee;
-            word-break: break-all;
+            background: #2a2a2a; border: 1px solid #555; padding: 4px 6px; border-radius: 4px; color: #eee; word-break: break-all;
         }
         .copy-btn { padding: 4px 8px; }
-        .contrast-box {
-            display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 6px;
-        }
-        .contrast-sample {
-            height: 48px; display: flex; align-items: center; justify-content: center; border-radius: 6px; border: 1px solid #555; font-weight: 600;
-        }
-        .history-list {
-            display: flex; flex-wrap: wrap; gap: 8px;
-        }
-        .history-item {
-            width: 28px; height: 28px; border: 1px solid #555; border-radius: 4px; cursor: pointer;
-        }
-        .status-line {
-            font-size: 0.85em; color: #ccc; padding: 4px 12px; border-top: 1px solid #444; background: #2b2b2b;
-        }
-        .note {
-            color: #bbb; font-size: 0.85em;
-        }
+        .contrast-box { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 6px; }
+        .contrast-sample { height: 48px; display: flex; align-items: center; justify-content: center; border-radius: 6px; border: 1px solid #555; font-weight: 600; }
+        .history-list { display: flex; flex-wrap: wrap; gap: 8px; }
+        .history-item { width: 28px; height: 28px; border: 1px solid #555; border-radius: 4px; cursor: pointer; }
+        .status-line { font-size: 0.85em; color: #ccc; padding: 4px 12px; border-top: 1px solid #444; background: #2b2b2b; }
+        .note { color: #bbb; font-size: 0.85em; }
     </style>
 </head>
 <body>
@@ -426,16 +412,18 @@
                     <div class="split-left">
                         <div class="panel-header">画像</div>
                         <div class="img-toolbar">
-                            <input type="file" id="img-file" accept="image/*">
+                            <input type="file" id="img-file" accept="image/*" multiple>
                             <input type="text" id="img-url" placeholder="画像URL（CORS対応のもの）">
                             <button class="btn" id="btn-load-url">読み込み</button>
                             <button class="btn" id="btn-eyedropper" title="対応ブラウザのみ">画面スポイト</button>
                             <button class="btn" id="btn-canvas-picker" title="キャンバス上でクリックして色を取得">キャンバススポイト</button>
+                            <span class="note">最大10枚まで同時管理・番号で切替</span>
                         </div>
+                        <div class="img-switcher" id="img-switcher"></div>
                         <div class="img-stage" id="image-stage">
                             <canvas id="image-canvas"></canvas>
                             <canvas id="magnifier-canvas" width="140" height="140"></canvas>
-                            <div class="stage-hint" id="stage-hint">画像を読み込むか、ここにドラッグ＆ドロップしてください</div>
+                            <div class="stage-hint" id="stage-hint">画像を読み込むか、ここにドラッグ＆ドロップしてください（複数可）</div>
                             <div class="stage-overlay" id="stage-overlay" style="display:none;"></div>
                         </div>
                         <div class="status-line" id="img-status"></div>
@@ -468,7 +456,7 @@
                                 <div class="contrast-sample" id="contrast-on-white" style="background:#fff;color:#000;">サンプル</div>
                             </div>
 
-                            <div class="panel-section-title">履歴</div>
+                            <div class="panel-section-title">履歴（画像ごとに保存）</div>
                             <div class="history-list" id="history-list"></div>
                             <p class="note">画面スポイトはChrome/Edgeなどで使用可能です。URL読み込みはCORS対応の画像のみキャンバス内スポイトが動作します（ローカルファイルはOK）。</p>
                         </div>
@@ -575,7 +563,6 @@ body {
                 if (name === 'code') {
                     htmlEditor.refresh(); cssEditor.refresh(); jsEditor.refresh();
                 } else if (name === 'image') {
-                    // レイアウト変化に追従
                     if (typeof resizeImageStage === 'function') resizeImageStage();
                 }
             };
@@ -887,8 +874,12 @@ ${htmlCode}
             showMainTab('code');
 
             // =========================
-            // 画像カラー分析タブ 初期化
+            // 画像カラー分析タブ（複数画像対応）
             // =========================
+            const MAX_IMAGES = 10;
+            let images = []; // { id, img, sourceCanvas, sctx, drawnRect, history:[], currentColor:null }
+            let activeIndex = -1;
+
             const stage = document.getElementById('image-stage');
             const displayCanvas = document.getElementById('image-canvas');
             const dctx = displayCanvas.getContext('2d');
@@ -899,6 +890,7 @@ ${htmlCode}
             const statusLine = document.getElementById('img-status');
             const stageHint = document.getElementById('stage-hint');
             const stageOverlay = document.getElementById('stage-overlay');
+            const switcher = document.getElementById('img-switcher');
 
             const fileInput = document.getElementById('img-file');
             const urlInput = document.getElementById('img-url');
@@ -906,13 +898,6 @@ ${htmlCode}
             const eyedropBtn = document.getElementById('btn-eyedropper');
             const canvasPickerBtn = document.getElementById('btn-canvas-picker');
 
-            const sourceCanvas = document.createElement('canvas');
-            const sctx = sourceCanvas.getContext('2d', { willReadFrequently: true });
-            sctx.imageSmoothingEnabled = false;
-
-            let imageObj = null;
-            let imageLoaded = false;
-            let drawnRect = { dx: 0, dy: 0, dw: 0, dh: 0 };
             let pickMode = false;
 
             const historyContainer = document.getElementById('history-list');
@@ -929,8 +914,6 @@ ${htmlCode}
             const sampleOnBlack = document.getElementById('contrast-on-black');
             const sampleOnWhite = document.getElementById('contrast-on-white');
 
-            const pickedHistory = []; // {r,g,b,a}
-
             function setStatus(msg) { statusLine.textContent = msg || ''; }
 
             function enableEyedropperUI() {
@@ -940,6 +923,61 @@ ${htmlCode}
                 }
             }
             enableEyedropperUI();
+
+            function addImageFromHTMLImageElement(img) {
+                if (images.length >= MAX_IMAGES) {
+                    setStatus(`これ以上追加できません（最大${MAX_IMAGES}枚）`);
+                    return;
+                }
+                const sourceCanvas = document.createElement('canvas');
+                const sctx = sourceCanvas.getContext('2d', { willReadFrequently: true });
+                sctx.imageSmoothingEnabled = false;
+                const iw = img.naturalWidth || img.width;
+                const ih = img.naturalHeight || img.height;
+                sourceCanvas.width = iw;
+                sourceCanvas.height = ih;
+                sctx.clearRect(0,0,iw,ih);
+                sctx.drawImage(img, 0, 0);
+
+                const id = images.length + 1; // 番号で管理（1始まり、追加順）
+                const item = { id, img, sourceCanvas, sctx, drawnRect: {dx:0,dy:0,dw:0,dh:0}, history: [], currentColor: null };
+                images.push(item);
+                renderImageButtons();
+                setActiveImage(images.length - 1);
+                setStatus(`画像${id} を追加しました（${iw}×${ih}）`);
+            }
+
+            function renderImageButtons() {
+                switcher.innerHTML = '';
+                images.forEach((it, i) => {
+                    const btn = document.createElement('button');
+                    btn.className = 'img-chip' + (i === activeIndex ? ' active' : '');
+                    btn.textContent = `画像${it.id}`;
+                    btn.addEventListener('click', () => setActiveImage(i));
+                    switcher.appendChild(btn);
+                });
+            }
+
+            function setActiveImage(index) {
+                if (index < 0 || index >= images.length) return;
+                activeIndex = index;
+                renderImageButtons();
+                stageHint.style.display = 'none';
+                resizeImageStage();
+                const act = getActiveImage();
+                if (act && act.currentColor) {
+                    setCurrentColor(act.currentColor, false);
+                } else {
+                    resetColorOutputs();
+                }
+                renderHistory();
+                setStatus(`画像${act.id} を表示中`);
+            }
+
+            function getActiveImage() {
+                if (activeIndex < 0 || activeIndex >= images.length) return null;
+                return images[activeIndex];
+            }
 
             function loadImageFromFile(file) {
                 if (!file || !file.type || !file.type.startsWith('image/')) {
@@ -955,23 +993,9 @@ ${htmlCode}
 
             function loadImageFromSrc(src, remote) {
                 const img = new Image();
-                if (remote) img.crossOrigin = 'anonymous'; // CORS対応が必要
-                img.onload = () => {
-                    imageObj = img;
-                    imageLoaded = true;
-                    stageHint.style.display = 'none';
-                    setStatus(`画像を読み込みました: ${img.naturalWidth}×${img.naturalHeight}`);
-
-                    sourceCanvas.width = img.naturalWidth || img.width;
-                    sourceCanvas.height = img.naturalHeight || img.height;
-                    sctx.clearRect(0,0,sourceCanvas.width,sourceCanvas.height);
-                    sctx.drawImage(img, 0, 0);
-
-                    resizeImageStage(); // ここでdisplayCanvasも描画
-                };
-                img.onerror = () => {
-                    setStatus('画像を読み込めませんでした（URLの誤りやCORS制限の可能性があります）');
-                };
+                if (remote) img.crossOrigin = 'anonymous';
+                img.onload = () => addImageFromHTMLImageElement(img);
+                img.onerror = () => setStatus('画像を読み込めませんでした（URLの誤りやCORS制限の可能性があります）');
                 img.src = src;
             }
 
@@ -989,9 +1013,11 @@ ${htmlCode}
 
             function redrawDisplay() {
                 dctx.clearRect(0,0,displayCanvas.width, displayCanvas.height);
-                if (!imageLoaded || !imageObj) return;
-                const iw = imageObj.naturalWidth || imageObj.width;
-                const ih = imageObj.naturalHeight || imageObj.height;
+                const act = getActiveImage();
+                if (!act) return;
+                const img = act.img;
+                const iw = img.naturalWidth || img.width;
+                const ih = img.naturalHeight || img.height;
                 const sw = displayCanvas.width;
                 const sh = displayCanvas.height;
                 const scale = Math.min(sw/iw, sh/ih);
@@ -999,58 +1025,60 @@ ${htmlCode}
                 const dh = Math.max(1, Math.floor(ih * scale));
                 const dx = Math.floor((sw - dw)/2);
                 const dy = Math.floor((sh - dh)/2);
-                drawnRect = { dx, dy, dw, dh };
+                act.drawnRect = { dx, dy, dw, dh };
                 dctx.imageSmoothingEnabled = true;
-                dctx.drawImage(imageObj, dx, dy, dw, dh);
+                dctx.drawImage(img, dx, dy, dw, dh);
             }
 
             // キャンバス上の座標 -> 元画像のピクセル座標へ変換
             function mapToImagePixel(clientX, clientY) {
+                const act = getActiveImage();
+                if (!act) return null;
                 const rect = displayCanvas.getBoundingClientRect();
                 const x = clientX - rect.left;
                 const y = clientY - rect.top;
-                if (!drawnRect) return null;
-                const { dx, dy, dw, dh } = drawnRect;
+                const { dx, dy, dw, dh } = act.drawnRect || {dx:0,dy:0,dw:0,dh:0};
                 if (x < dx || y < dy || x >= dx + dw || y >= dy + dh) return null;
                 const nx = (x - dx) / dw;
                 const ny = (y - dy) / dh;
-                const px = Math.max(0, Math.min(sourceCanvas.width - 1, Math.floor(nx * sourceCanvas.width)));
-                const py = Math.max(0, Math.min(sourceCanvas.height - 1, Math.floor(ny * sourceCanvas.height)));
+                const px = Math.max(0, Math.min(act.sourceCanvas.width - 1, Math.floor(nx * act.sourceCanvas.width)));
+                const py = Math.max(0, Math.min(act.sourceCanvas.height - 1, Math.floor(ny * act.sourceCanvas.height)));
                 return { px, py, cx: x, cy: y };
             }
 
             function readPixel(px, py) {
+                const act = getActiveImage();
+                if (!act) return null;
                 try {
-                    const data = sctx.getImageData(px, py, 1, 1).data;
+                    const data = act.sctx.getImageData(px, py, 1, 1).data;
                     return { r: data[0], g: data[1], b: data[2], a: data[3] / 255 };
                 } catch (e) {
-                    // CORSで汚染されたキャンバス等
                     setStatus('キャンバスからの読み取りに失敗しました（CORS制限の可能性）');
                     return null;
                 }
             }
 
             function drawMagnifier(px, py, cx, cy) {
+                const act = getActiveImage();
+                if (!act) return;
                 const w = magnifierCanvas.width;
                 const h = magnifierCanvas.height;
-                const size = 21; // 21x21ピクセルを拡大
+                const size = 21;
                 const half = Math.floor(size / 2);
-                const sx = Math.max(0, Math.min(sourceCanvas.width - size, px - half));
-                const sy = Math.max(0, Math.min(sourceCanvas.height - size, py - half));
+                const sx = Math.max(0, Math.min(act.sourceCanvas.width - size, px - half));
+                const sy = Math.max(0, Math.min(act.sourceCanvas.height - size, py - half));
                 mctx.clearRect(0,0,w,h);
                 mctx.imageSmoothingEnabled = false;
                 mctx.fillStyle = '#222'; mctx.fillRect(0,0,w,h);
-                mctx.drawImage(sourceCanvas, sx, sy, size, size, 0, 0, w, h);
+                mctx.drawImage(act.sourceCanvas, sx, sy, size, size, 0, 0, w, h);
 
                 // グリッド
                 mctx.strokeStyle = 'rgba(255,255,255,0.2)';
                 mctx.lineWidth = 1;
                 const step = w / size;
                 for (let i = 1; i < size; i++) {
-                    mctx.beginPath();
-                    mctx.moveTo(i*step, 0); mctx.lineTo(i*step, h); mctx.stroke();
-                    mctx.beginPath();
-                    mctx.moveTo(0, i*step); mctx.lineTo(w, i*step); mctx.stroke();
+                    mctx.beginPath(); mctx.moveTo(i*step, 0); mctx.lineTo(i*step, h); mctx.stroke();
+                    mctx.beginPath(); mctx.moveTo(0, i*step); mctx.lineTo(w, i*step); mctx.stroke();
                 }
                 // 中心クロスヘア
                 mctx.strokeStyle = '#fff';
@@ -1060,7 +1088,7 @@ ${htmlCode}
                 mctx.beginPath(); mctx.moveTo(cxLine, 0); mctx.lineTo(cxLine, h); mctx.stroke();
                 mctx.beginPath(); mctx.moveTo(0, cyLine); mctx.lineTo(w, cyLine); mctx.stroke();
 
-                // 位置（キャンバスの右下に寄せる）
+                // 位置
                 const rect = stage.getBoundingClientRect();
                 const left = Math.min(rect.width - w - 10, Math.max(10, cx + 20));
                 const top  = Math.min(rect.height - h - 10, Math.max(10, cy + 20));
@@ -1080,7 +1108,21 @@ ${htmlCode}
                 if (!on) hideMagnifier();
             }
 
-            // 出力更新
+            function resetColorOutputs() {
+                currentSwatch.style.background = '#000';
+                currentColorText.textContent = '未取得';
+                outHex.textContent = '-';
+                outHexa.textContent = '-';
+                outRgb.textContent = '-';
+                outHsl.textContent = '-';
+                outLum.textContent = '-';
+                outContB.textContent = '-';
+                outContW.textContent = '-';
+                sampleOnBlack.style.color = '#fff';
+                sampleOnWhite.style.color = '#000';
+            }
+
+            // 出力更新（画像ごとに履歴管理）
             function setCurrentColor(col, pushHistory = false) {
                 if (!col) return;
                 const { r, g, b, a } = col;
@@ -1094,7 +1136,6 @@ ${htmlCode}
 
                 currentSwatch.style.background = hexa;
                 currentColorText.textContent = `${hex} / ${rgb}`;
-
                 outHex.textContent = hex;
                 outHexa.textContent = hexa;
                 outRgb.textContent = rgb;
@@ -1102,21 +1143,25 @@ ${htmlCode}
                 outLum.textContent = lum.toFixed(4);
                 outContB.textContent = contB.toFixed(2);
                 outContW.textContent = contW.toFixed(2);
-
-                // サンプル
                 sampleOnBlack.style.color = hexa;
                 sampleOnWhite.style.color = hexa;
 
-                if (pushHistory) {
-                    pickedHistory.unshift({ r, g, b, a });
-                    if (pickedHistory.length > 60) pickedHistory.pop();
-                    renderHistory();
+                const act = getActiveImage();
+                if (act) {
+                    act.currentColor = { r, g, b, a };
+                    if (pushHistory) {
+                        act.history.unshift({ r, g, b, a });
+                        if (act.history.length > 60) act.history.pop();
+                        renderHistory();
+                    }
                 }
             }
 
             function renderHistory() {
                 historyContainer.innerHTML = '';
-                pickedHistory.forEach((c, idx) => {
+                const act = getActiveImage();
+                if (!act || !act.history.length) return;
+                act.history.forEach((c) => {
                     const d = document.createElement('button');
                     d.className = 'history-item';
                     d.style.background = rgbaToHex(c.r, c.g, c.b, c.a);
@@ -1126,25 +1171,34 @@ ${htmlCode}
                 });
             }
 
-            // 画像入力
+            // 画像入力（複数同時）
             fileInput.addEventListener('change', (e) => {
-                const file = e.target.files && e.target.files[0];
-                if (file) loadImageFromFile(file);
+                const files = Array.from(e.target.files || []);
+                if (!files.length) return;
+                const room = MAX_IMAGES - images.length;
+                files.slice(0, room).forEach(loadImageFromFile);
+                if (files.length > room) setStatus(`最大${MAX_IMAGES}枚までです。超過分は読み込みませんでした。`);
+                // 再選択時に同じファイルでもイベントが走るようクリア
+                fileInput.value = '';
             });
             urlBtn.addEventListener('click', () => {
                 const url = urlInput.value.trim();
                 if (!url) { setStatus('画像URLを入力してください'); return; }
+                if (images.length >= MAX_IMAGES) { setStatus(`最大${MAX_IMAGES}枚までです`); return; }
                 loadImageFromSrc(url, true);
             });
 
-            // D&D
+            // D&D 複数対応
             stage.addEventListener('dragover', (e) => { e.preventDefault(); stageOverlay.style.display = 'block'; });
-            stage.addEventListener('dragleave', (e) => { stageOverlay.style.display = pickMode ? 'block' : 'none'; });
+            stage.addEventListener('dragleave', () => { stageOverlay.style.display = pickMode ? 'block' : 'none'; });
             stage.addEventListener('drop', (e) => {
                 e.preventDefault();
                 stageOverlay.style.display = pickMode ? 'block' : 'none';
-                const file = e.dataTransfer.files && e.dataTransfer.files[0];
-                if (file) loadImageFromFile(file);
+                const files = Array.from(e.dataTransfer.files || []).filter(f => f.type && f.type.startsWith('image/'));
+                if (!files.length) return;
+                const room = MAX_IMAGES - images.length;
+                files.slice(0, room).forEach(loadImageFromFile);
+                if (files.length > room) setStatus(`最大${MAX_IMAGES}枚までです。超過分は読み込みませんでした。`);
             });
 
             // EyeDropper（画面スポイト）
@@ -1153,38 +1207,32 @@ ${htmlCode}
                 try {
                     const ed = new window.EyeDropper();
                     const res = await ed.open();
-                    // res.sRGBHex は #RRGGBB
                     const col = hexToRgba(res.sRGBHex);
                     setCurrentColor(col, true);
                     setStatus('画面スポイトで色を取得しました');
-                } catch (e) {
-                    // キャンセルされた場合など
+                } catch {
                     setStatus('画面スポイトをキャンセルしました');
                 }
             });
 
             // キャンバススポイト
             canvasPickerBtn.addEventListener('click', () => {
-                if (!imageLoaded) { setStatus('先に画像を読み込んでください'); return; }
+                if (!getActiveImage()) { setStatus('先に画像を読み込んでください'); return; }
                 setPickMode(!pickMode);
                 canvasPickerBtn.textContent = pickMode ? 'キャンバススポイト終了' : 'キャンバススポイト';
             });
 
             displayCanvas.addEventListener('mousemove', (e) => {
-                if (!pickMode || !imageLoaded) return;
+                if (!pickMode || !getActiveImage()) return;
                 const map = mapToImagePixel(e.clientX, e.clientY);
                 if (!map) { hideMagnifier(); return; }
                 const pix = readPixel(map.px, map.py);
                 if (!pix) { hideMagnifier(); return; }
                 drawMagnifier(map.px, map.py, map.cx, map.cy);
             });
-
-            displayCanvas.addEventListener('mouseleave', () => {
-                if (pickMode) hideMagnifier();
-            });
-
+            displayCanvas.addEventListener('mouseleave', () => { if (pickMode) hideMagnifier(); });
             displayCanvas.addEventListener('click', (e) => {
-                if (!pickMode || !imageLoaded) return;
+                if (!pickMode || !getActiveImage()) return;
                 const map = mapToImagePixel(e.clientX, e.clientY);
                 if (!map) return;
                 const pix = readPixel(map.px, map.py);
@@ -1246,7 +1294,6 @@ ${htmlCode}
                 return `rgb(${r} ${g} ${b})`;
             }
             function toHslString(r,g,b,a=1){
-                // 0..255 -> 0..1
                 const R = r/255, G = g/255, B = b/255;
                 const max = Math.max(R,G,B), min = Math.min(R,G,B);
                 let h, s, l = (max+min)/2;
@@ -1273,7 +1320,7 @@ ${htmlCode}
                 return c <= 0.04045 ? c/12.92 : Math.pow((c+0.055)/1.055, 2.4);
             }
             function relativeLuminance(r,g,b){
-                const R = srgbToLinear(r*255/255), G = srgbToLinear(g*255/255), B = srgbToLinear(b*255/255);
+                const R = srgbToLinear(r), G = srgbToLinear(g), B = srgbToLinear(b);
                 return 0.2126*R + 0.7152*G + 0.0722*B;
             }
             function contrastRatio(l1, l2){
