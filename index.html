@@ -27,6 +27,7 @@
             --muted: #aaaaaa;
             --ok: #7bd88f;
             --ng: #f26d6d;
+            --shadow: rgba(0,0,0,0.35);
         }
         * { box-sizing: border-box; }
         html, body { height: 100%; }
@@ -47,7 +48,7 @@
             border-bottom: 2px solid var(--accent);
         }
 
-        /* 上位タブ（編集 / プレビュー） */
+        /* 上位タブ（編集 / プレビュー / 画像カラー分析） */
         .main-container {
             display: flex;
             flex-direction: column;
@@ -176,7 +177,7 @@
             background-color: #fff;
         }
 
-        /* インスペクター */
+        /* インスペクター（プレビュー・変更タブ右側） */
         .inspector-body {
             flex: 1;
             background-color: var(--panel);
@@ -222,19 +223,9 @@
             border: 1px solid #555;
             color: #ddd;
         }
-        .validity-badge.ok {
-            border-color: #2e7d32;
-            color: var(--ok);
-        }
-        .validity-badge.ng {
-            border-color: #8e2a2a;
-            color: #f26d6d;
-        }
-        .inspector-actions {
-            display: inline-flex;
-            gap: 6px;
-            align-items: center;
-        }
+        .validity-badge.ok { border-color: #2e7d32; color: var(--ok); }
+        .validity-badge.ng { border-color: #8e2a2a; color: var(--ng); }
+        .inspector-actions { display: inline-flex; gap: 6px; align-items: center; }
         .btn {
             background: var(--panel-2);
             border: 1px solid #555;
@@ -246,10 +237,74 @@
         .btn:hover { background: #3a3a3a; }
         .btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
-        /* プレースホルダー */
-        #inspector-placeholder {
-            color: #aaa;
-            margin: 6px 0 0 0;
+        /* 画像カラー分析タブ */
+        .img-toolbar {
+            display: flex; gap: 8px; align-items: center;
+            padding: 8px 12px; background: var(--panel-2); border-bottom: 1px solid var(--border-1);
+            flex-wrap: wrap;
+        }
+        .img-toolbar input[type="text"] {
+            background: #3c3c3c; border: 1px solid #555; color: #f0f0f0; padding: 6px 8px; border-radius: 3px;
+            min-width: 200px; flex: 1 1 200px;
+        }
+        .img-toolbar input[type="file"] { color: #ddd; }
+        .img-stage {
+            position: relative; flex: 1; min-height: 0;
+            /* チェッカーボード（透明背景の確認用） */
+            background:
+              conic-gradient(#eee 25%, #fff 0 50%, #eee 0 75%, #fff 0) 0 0 / 16px 16px;
+        }
+        #image-canvas {
+            width: 100%; height: 100%; display: block; background: transparent;
+        }
+        #magnifier-canvas {
+            position: absolute; width: 140px; height: 140px;
+            border: 1px solid #666; border-radius: 6px; box-shadow: 0 6px 18px var(--shadow);
+            display: none; pointer-events: none; background: #111;
+        }
+        .img-stage.picking #image-canvas { cursor: crosshair; }
+        .stage-hint {
+            position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+            color: #ccc; font-size: 0.95em; text-align: center; padding: 8px; pointer-events: none;
+        }
+        .stage-overlay {
+            position: absolute; inset: 0; border: 2px dashed #666; border-radius: 8px; pointer-events: none;
+            margin: 8px;
+        }
+        .panel-section-title {
+            font-weight: bold; margin: 12px 0 6px; color: #fff;
+        }
+        .current-color {
+            display: flex; align-items: center; gap: 10px;
+        }
+        .swatch-large {
+            width: 64px; height: 64px; border: 1px solid #555; border-radius: 6px; background: #000;
+        }
+        .kv-row {
+            display: flex; align-items: center; gap: 8px; margin-bottom: 8px; flex-wrap: wrap;
+        }
+        .kv-row code {
+            background: #2a2a2a; border: 1px solid #555; padding: 4px 6px; border-radius: 4px; color: #eee;
+            word-break: break-all;
+        }
+        .copy-btn { padding: 4px 8px; }
+        .contrast-box {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 6px;
+        }
+        .contrast-sample {
+            height: 48px; display: flex; align-items: center; justify-content: center; border-radius: 6px; border: 1px solid #555; font-weight: 600;
+        }
+        .history-list {
+            display: flex; flex-wrap: wrap; gap: 8px;
+        }
+        .history-item {
+            width: 28px; height: 28px; border: 1px solid #555; border-radius: 4px; cursor: pointer;
+        }
+        .status-line {
+            font-size: 0.85em; color: #ccc; padding: 4px 12px; border-top: 1px solid #444; background: #2b2b2b;
+        }
+        .note {
+            color: #bbb; font-size: 0.85em;
         }
     </style>
 </head>
@@ -261,6 +316,7 @@
         <div class="top-tabs">
             <button class="top-tab-button active" onclick="showMainTab('code')">コード編集</button>
             <button class="top-tab-button" onclick="showMainTab('preview')">プレビュー・変更</button>
+            <button class="top-tab-button" onclick="showMainTab('image')">画像カラー分析</button>
         </div>
 
         <div class="page-container">
@@ -362,12 +418,69 @@
                     </div>
                 </div>
             </section>
+
+            <!-- 画像カラー分析タブ（左右分割） -->
+            <section id="image-page" class="tab-page">
+                <div class="split-container">
+                    <!-- 左：画像 -->
+                    <div class="split-left">
+                        <div class="panel-header">画像</div>
+                        <div class="img-toolbar">
+                            <input type="file" id="img-file" accept="image/*">
+                            <input type="text" id="img-url" placeholder="画像URL（CORS対応のもの）">
+                            <button class="btn" id="btn-load-url">読み込み</button>
+                            <button class="btn" id="btn-eyedropper" title="対応ブラウザのみ">画面スポイト</button>
+                            <button class="btn" id="btn-canvas-picker" title="キャンバス上でクリックして色を取得">キャンバススポイト</button>
+                        </div>
+                        <div class="img-stage" id="image-stage">
+                            <canvas id="image-canvas"></canvas>
+                            <canvas id="magnifier-canvas" width="140" height="140"></canvas>
+                            <div class="stage-hint" id="stage-hint">画像を読み込むか、ここにドラッグ＆ドロップしてください</div>
+                            <div class="stage-overlay" id="stage-overlay" style="display:none;"></div>
+                        </div>
+                        <div class="status-line" id="img-status"></div>
+                    </div>
+
+                    <!-- 右：分析結果 -->
+                    <div class="split-right">
+                        <div class="panel-header">カラー分析</div>
+                        <div class="inspector-body" id="image-inspector">
+                            <div class="panel-section-title">現在の色</div>
+                            <div class="current-color">
+                                <div class="swatch-large" id="current-swatch"></div>
+                                <div id="current-color-text">未取得</div>
+                            </div>
+
+                            <div class="panel-section-title">表記</div>
+                            <div class="kv-row"><label style="min-width:80px;">HEX</label><code id="hex-val">-</code><button class="btn copy-btn" data-copy-target="hex-val">コピー</button></div>
+                            <div class="kv-row"><label style="min-width:80px;">HEXA</label><code id="hexa-val">-</code><button class="btn copy-btn" data-copy-target="hexa-val">コピー</button></div>
+                            <div class="kv-row"><label style="min-width:80px;">RGB(A)</label><code id="rgb-val">-</code><button class="btn copy-btn" data-copy-target="rgb-val">コピー</button></div>
+                            <div class="kv-row"><label style="min-width:80px;">HSL(A)</label><code id="hsl-val">-</code><button class="btn copy-btn" data-copy-target="hsl-val">コピー</button></div>
+
+                            <div class="panel-section-title">視認性</div>
+                            <div class="kv-row"><label style="min-width:120px;">相対輝度</label><code id="luminance-val">-</code></div>
+                            <div class="kv-row"><label style="min-width:120px;">コントラスト比</label>
+                                <div>対黒: <code id="contrast-black">-</code></div>
+                                <div>対白: <code id="contrast-white">-</code></div>
+                            </div>
+                            <div class="contrast-box">
+                                <div class="contrast-sample" id="contrast-on-black" style="background:#000;color:#fff;">サンプル</div>
+                                <div class="contrast-sample" id="contrast-on-white" style="background:#fff;color:#000;">サンプル</div>
+                            </div>
+
+                            <div class="panel-section-title">履歴</div>
+                            <div class="history-list" id="history-list"></div>
+                            <p class="note">画面スポイトはChrome/Edgeなどで使用可能です。URL読み込みはCORS対応の画像のみキャンバス内スポイトが動作します（ローカルファイルはOK）。</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
         </div>
     </main>
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // --- グローバル ---
+            // --- グローバル（プレビュー・変更タブ関連） ---
             let selectedElement = null;
             let lastHighlightedElement = null;
             let lastSelectedSelectorPath = null; // プレビュー更新後の選択復元用
@@ -375,7 +488,6 @@
             // 色の履歴（セレクタごと／プロパティごと）: Undo/Redo スタック
             // Map<string, { color: {undo:string[], redo:string[]}, backgroundColor: {undo:string[], redo:string[]} }>
             const colorHistory = new Map();
-
             function getHistory(selector) {
                 if (!colorHistory.has(selector)) {
                     colorHistory.set(selector, {
@@ -457,15 +569,14 @@ body {
             window.showMainTab = function(name) {
                 document.querySelectorAll('.top-tab-button').forEach(btn => btn.classList.remove('active'));
                 document.querySelectorAll('.tab-page').forEach(p => p.classList.remove('active'));
+                document.querySelector(`.top-tab-button[onclick="showMainTab('${name}')"]`).classList.add('active');
+                document.getElementById(name === 'code' ? 'code-page' : name === 'preview' ? 'preview-page' : 'image-page').classList.add('active');
+
                 if (name === 'code') {
-                    document.querySelector(`.top-tab-button[onclick="showMainTab('code')"]`).classList.add('active');
-                    document.getElementById('code-page').classList.add('active');
-                    htmlEditor.refresh();
-                    cssEditor.refresh();
-                    jsEditor.refresh();
-                } else {
-                    document.querySelector(`.top-tab-button[onclick="showMainTab('preview')"]`).classList.add('active');
-                    document.getElementById('preview-page').classList.add('active');
+                    htmlEditor.refresh(); cssEditor.refresh(); jsEditor.refresh();
+                } else if (name === 'image') {
+                    // レイアウト変化に追従
+                    if (typeof resizeImageStage === 'function') resizeImageStage();
                 }
             };
 
@@ -473,10 +584,8 @@ body {
             window.showEditor = function(editorName) {
                 document.querySelectorAll('.editor-wrapper').forEach(w => w.classList.remove('active'));
                 document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
-
                 document.getElementById(`${editorName}-editor-wrapper`).classList.add('active');
                 document.querySelector(`.tab-button[onclick="showEditor('${editorName}')"]`).classList.add('active');
-
                 if (editorName === 'html') htmlEditor.refresh();
                 if (editorName === 'css') cssEditor.refresh();
                 if (editorName === 'js') jsEditor.refresh();
@@ -506,50 +615,39 @@ ${htmlCode}
 </html>`);
                 doc.close();
 
-                // プレビュー再構築後にイベントを再設定
                 setupInspectorListeners();
-
-                // 再選択を試みる（前回クリックしていた要素）
                 if (!restoreSelection()) {
                     selectedElement = null;
                     lastHighlightedElement = null;
                     showInspectorPlaceholder();
                 }
             }
-
             htmlEditor.on('change', updatePreview);
             cssEditor.on('change', updatePreview);
             jsEditor.on('change', updatePreview);
 
-            // --- インスペクター関連 ---
+            // --- インスペクター（プレビュー・変更） ---
             function setupInspectorListeners() {
                 const iframe = document.getElementById('preview-frame');
                 const pdoc = iframe.contentDocument || iframe.contentWindow.document;
                 const pbody = pdoc && pdoc.body;
                 if (!pbody) return;
-
                 pbody.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-
+                    e.preventDefault(); e.stopPropagation();
                     if (lastHighlightedElement) lastHighlightedElement.style.outline = '';
-
                     selectedElement = e.target;
                     selectedElement.style.outline = '2px solid #007acc';
                     lastHighlightedElement = selectedElement;
-
                     lastSelectedSelectorPath = getCssSelector(selectedElement);
                     populateInspector(selectedElement);
                 }, { capture: true });
             }
-
             function restoreSelection() {
                 if (!lastSelectedSelectorPath) return false;
                 const iframe = document.getElementById('preview-frame');
                 const pdoc = iframe.contentDocument || iframe.contentWindow.document;
                 if (!pdoc) return false;
-                let el = null;
-                try { el = pdoc.querySelector(lastSelectedSelectorPath); } catch (_) {}
+                let el = null; try { el = pdoc.querySelector(lastSelectedSelectorPath); } catch (_) {}
                 if (el) {
                     if (lastHighlightedElement) lastHighlightedElement.style.outline = '';
                     selectedElement = el;
@@ -560,20 +658,15 @@ ${htmlCode}
                 }
                 return false;
             }
-
             function getCssSelector(el) {
                 if (!el || el.nodeType !== 1) return '';
                 const parts = [];
                 while (el && el.nodeType === 1) {
                     let selector = el.nodeName.toLowerCase();
                     if (el.id) {
-                        selector = '#' + el.id;
-                        parts.unshift(selector);
-                        break;
+                        selector = '#' + el.id; parts.unshift(selector); break;
                     } else {
-                        if (el.classList && el.classList.length) {
-                            selector += '.' + el.classList[0];
-                        }
+                        if (el.classList && el.classList.length) selector += '.' + el.classList[0];
                         let sib = el, nth = 1;
                         while (sib = sib.previousElementSibling) {
                             if (sib.nodeName.toLowerCase() === el.nodeName.toLowerCase()) nth++;
@@ -585,63 +678,39 @@ ${htmlCode}
                 }
                 return parts.join(' > ');
             }
-
             function showInspectorPlaceholder() {
                 document.getElementById('inspector-placeholder').style.display = 'block';
                 document.getElementById('inspector-ui').style.display = 'none';
             }
-
             function populateInspector(element) {
                 document.getElementById('inspector-placeholder').style.display = 'none';
                 document.getElementById('inspector-ui').style.display = 'block';
-
                 const iframe = document.getElementById('preview-frame');
                 const pwin = iframe.contentWindow;
                 const styles = pwin.getComputedStyle(element);
-
                 document.getElementById('selected-element-selector').textContent = getCssSelector(element);
-
-                // テキスト初期表示（デフォルトはtextContent）
                 const textAsHTML = document.getElementById('inspector-text-as-html');
                 textAsHTML.checked = false;
                 document.getElementById('inspector-text').value = element.textContent ?? '';
-
-                // カラー表示
                 const colorInput = document.getElementById('inspector-color');
                 const bgInput = document.getElementById('inspector-bg');
                 colorInput.value = styles.color || '';
                 bgInput.value = styles.backgroundColor || '';
-
-                updateColorUI('color');
-                updateColorUI('bg');
-                updateApplyButtons();
-                updateHistoryButtons();
-
-                // ボックス系
+                updateColorUI('color'); updateColorUI('bg'); updateApplyButtons(); updateHistoryButtons();
                 document.getElementById('inspector-padding').value = styles.padding || '';
                 document.getElementById('inspector-margin').value = styles.margin || '';
                 document.getElementById('inspector-fontSize').value = styles.fontSize || '';
             }
 
-            // CSSコードへの反映（選択要素への即時反映＋CSSエディタ更新）
             function applyStyleChange(property, value) {
                 if (!selectedElement) return;
-
-                // 即時反映（プレビュー内の要素）
                 selectedElement.style[property] = value;
-
-                // CSSエディタへ反映
                 const selector = getCssSelector(selectedElement);
                 let cssCode = cssEditor.getValue();
-
-                // camelCase -> kebab-case
                 const cssProperty = property.replace(/([A-Z])/g, '-$1').toLowerCase();
-
-                // セレクタルールを探す
                 const esc = selector.replace(/[\/\\^$*+?.()|[\]{}]/g, '\\$&');
                 const regex = new RegExp(`(${esc})\\s*\\{([^}]*)\\}`, 's');
                 const match = cssCode.match(regex);
-
                 if (match) {
                     let properties = match[2];
                     const propRegex = new RegExp(`(^|;)\\s*${cssProperty}\\s*:[^;]*`, 'i');
@@ -657,13 +726,11 @@ ${htmlCode}
                 } else {
                     cssCode += `\n\n${selector} {\n    ${cssProperty}: ${value};\n}`;
                 }
-
-                // 選択を維持するためにセレクタを保存
                 lastSelectedSelectorPath = selector;
                 cssEditor.setValue(cssCode);
             }
 
-            // --- カラー入力（全CSS色表記対応） ---
+            // カラー入力 妥当性
             function isValidCSSColor(value) {
                 const iframe = document.getElementById('preview-frame');
                 const pwin = iframe.contentWindow;
@@ -671,69 +738,45 @@ ${htmlCode}
                     if (pwin.CSS && typeof pwin.CSS.supports === 'function') {
                         return pwin.CSS.supports('color', value);
                     }
-                } catch (_) {}
-                // フォールバック
+                } catch (_) { }
                 const opt = pwin.document.createElement('option');
                 opt.style.color = '';
                 opt.style.color = value;
                 return !!opt.style.color;
             }
-
             function updateColorUI(kind) {
                 const input = document.getElementById(kind === 'color' ? 'inspector-color' : 'inspector-bg');
                 const swatch = document.getElementById(kind === 'color' ? 'swatch-color' : 'swatch-bg');
                 const badge = document.getElementById(kind === 'color' ? 'valid-color' : 'valid-bg');
                 const val = input.value.trim();
-
-                if (!val) {
-                    swatch.style.background = 'transparent';
-                    badge.textContent = '未入力';
-                    badge.classList.remove('ok','ng');
-                } else if (isValidCSSColor(val)) {
-                    swatch.style.background = val;
-                    badge.textContent = 'OK';
-                    badge.classList.add('ok');
-                    badge.classList.remove('ng');
-                } else {
-                    swatch.style.background = 'transparent';
-                    badge.textContent = '不正';
-                    badge.classList.add('ng');
-                    badge.classList.remove('ok');
-                }
+                if (!val) { swatch.style.background = 'transparent'; badge.textContent = '未入力'; badge.classList.remove('ok','ng'); }
+                else if (isValidCSSColor(val)) { swatch.style.background = val; badge.textContent = 'OK'; badge.classList.add('ok'); badge.classList.remove('ng'); }
+                else { swatch.style.background = 'transparent'; badge.textContent = '不正'; badge.classList.add('ng'); badge.classList.remove('ok'); }
                 updateApplyButtons();
             }
-
             function updateApplyButtons() {
                 const colorVal = document.getElementById('inspector-color').value.trim();
                 const bgVal = document.getElementById('inspector-bg').value.trim();
                 document.getElementById('apply-color').disabled = !(selectedElement && isValidCSSColor(colorVal));
                 document.getElementById('apply-bg').disabled = !(selectedElement && isValidCSSColor(bgVal));
             }
-
             function updateHistoryButtons() {
                 const selector = lastSelectedSelectorPath;
                 const entry = selector ? colorHistory.get(selector) : null;
-
                 const canUndoColor = !!(entry && entry.color.undo.length);
                 const canUndoBg = !!(entry && entry.backgroundColor.undo.length);
                 const canRedoColor = !!(entry && entry.color.redo.length);
                 const canRedoBg = !!(entry && entry.backgroundColor.redo.length);
-
                 document.getElementById('undo-color').disabled = !canUndoColor;
                 document.getElementById('undo-bg').disabled = !canUndoBg;
                 document.getElementById('redo-color').disabled = !canRedoColor;
                 document.getElementById('redo-bg').disabled = !canRedoBg;
             }
 
-            // 入力イベント: カラー（UI更新のみ。適用はボタンで）
             document.getElementById('inspector-color').addEventListener('input', () => updateColorUI('color'));
             document.getElementById('inspector-bg').addEventListener('input', () => updateColorUI('bg'));
-
-            // 適用ボタン: テキスト色 / 背景色
             document.getElementById('apply-color').addEventListener('click', () => commitColor('color'));
             document.getElementById('apply-bg').addEventListener('click', () => commitColor('backgroundColor'));
-
-            // 元に戻す / やり直す
             document.getElementById('undo-color').addEventListener('click', () => undoColor('color'));
             document.getElementById('undo-bg').addEventListener('click', () => undoColor('backgroundColor'));
             document.getElementById('redo-color').addEventListener('click', () => redoColor('color'));
@@ -744,72 +787,49 @@ ${htmlCode}
                 const input = document.getElementById(prop === 'color' ? 'inspector-color' : 'inspector-bg');
                 const val = input.value.trim();
                 if (!isValidCSSColor(val)) return;
-
                 const selector = getCssSelector(selectedElement);
                 lastSelectedSelectorPath = selector;
-
                 const iframe = document.getElementById('preview-frame');
                 const pwin = iframe.contentWindow;
                 const styles = pwin.getComputedStyle(selectedElement);
                 const prev = prop === 'color' ? styles.color : styles.backgroundColor;
-
-                // 履歴に積む（Undo）、Redoはクリア（新規分岐）
                 const h = getHistory(selector);
                 h[prop].undo.push(prev);
                 h[prop].redo.length = 0;
-
                 updateHistoryButtons();
-
-                // 実際に反映（CSSソースも更新）
                 applyStyleChange(prop, val);
             }
-
             function undoColor(prop) {
                 const selector = lastSelectedSelectorPath;
                 if (!selector) return;
                 const h = colorHistory.get(selector);
                 if (!h || !h[prop] || !h[prop].undo.length) return;
-
-                // 現在値をRedoスタックに積む
                 const iframe = document.getElementById('preview-frame');
                 const pwin = iframe.contentWindow;
                 const styles = pwin.getComputedStyle(selectedElement);
                 const currentVal = prop === 'color' ? styles.color : styles.backgroundColor;
                 h[prop].redo.push(currentVal);
-
-                // 直前の値を取り出して適用
                 const prev = h[prop].undo.pop();
-
-                // 入力欄も更新
                 const input = document.getElementById(prop === 'color' ? 'inspector-color' : 'inspector-bg');
                 input.value = prev || '';
                 updateColorUI(prop === 'color' ? 'color' : 'bg');
-
                 applyStyleChange(prop, prev);
                 updateHistoryButtons();
             }
-
             function redoColor(prop) {
                 const selector = lastSelectedSelectorPath;
                 if (!selector) return;
                 const h = colorHistory.get(selector);
                 if (!h || !h[prop] || !h[prop].redo.length) return;
-
-                // 現在値をUndoスタックに積む
                 const iframe = document.getElementById('preview-frame');
                 const pwin = iframe.contentWindow;
                 const styles = pwin.getComputedStyle(selectedElement);
                 const currentVal = prop === 'color' ? styles.color : styles.backgroundColor;
                 h[prop].undo.push(currentVal);
-
-                // Redoスタックから取り出して適用
                 const nextVal = h[prop].redo.pop();
-
-                // 入力欄も更新
                 const input = document.getElementById(prop === 'color' ? 'inspector-color' : 'inspector-bg');
                 input.value = nextVal || '';
                 updateColorUI(prop === 'color' ? 'color' : 'bg');
-
                 applyStyleChange(prop, nextVal);
                 updateHistoryButtons();
             }
@@ -818,39 +838,21 @@ ${htmlCode}
             const textArea = document.getElementById('inspector-text');
             const textAsHTML = document.getElementById('inspector-text-as-html');
             const applyTextBtn = document.getElementById('apply-text');
-
-            // 表示モード切り替え時（textContent / innerHTML）に値を入れ替え
             textAsHTML.addEventListener('change', () => {
                 if (!selectedElement) return;
                 textArea.value = textAsHTML.checked ? (selectedElement.innerHTML ?? '') : (selectedElement.textContent ?? '');
             });
-
-            // HTMLソース内の要素を見つけやすくするためのセレクタ補正（body相対に寄せる）
             function toBodyRelativeSelector(sel) {
-                return sel
-                    .replace(/^html\s*>\s*body\s*>\s*/i, '')
-                    .replace(/^body\s*>\s*/i, '');
+                return sel.replace(/^html\s*>\s*body\s*>\s*/i, '').replace(/^body\s*>\s*/i, '');
             }
-
-            // テキスト適用（HTMLエディタのソースにも反映）
             applyTextBtn.addEventListener('click', () => {
                 if (!selectedElement) return;
                 const selector = getCssSelector(selectedElement);
                 lastSelectedSelectorPath = selector;
-
                 const value = textArea.value ?? '';
-
-                // プレビューに即時反映
-                if (textAsHTML.checked) {
-                    selectedElement.innerHTML = value;
-                } else {
-                    selectedElement.textContent = value;
-                }
-
-                // HTMLソースを更新（DOMとして編集してからエディタへ反映）
+                if (textAsHTML.checked) selectedElement.innerHTML = value; else selectedElement.textContent = value;
                 const wrapper = document.createElement('div');
                 wrapper.innerHTML = htmlEditor.getValue();
-
                 let target = null;
                 try { target = wrapper.querySelector(selector); } catch (_) {}
                 if (!target) {
@@ -860,45 +862,424 @@ ${htmlCode}
                 if (!target && selectedElement.id) {
                     try { target = wrapper.querySelector('#' + selectedElement.id); } catch (_) {}
                 }
-
                 if (target) {
-                    if (textAsHTML.checked) {
-                        target.innerHTML = value;
-                    } else {
-                        target.textContent = value;
-                    }
+                    if (textAsHTML.checked) target.innerHTML = value; else target.textContent = value;
                     htmlEditor.setValue(wrapper.innerHTML.trim());
                 }
             });
 
-            // 入力イベント: ボックス系（変更確定時に反映）
+            // ボックス系
             document.getElementById('inspector-padding').addEventListener('change', (e) => {
                 const value = e.target.value.trim();
-                if (value) {
-                    lastSelectedSelectorPath = selectedElement ? getCssSelector(selectedElement) : lastSelectedSelectorPath;
-                    applyStyleChange('padding', value);
-                }
+                if (value) { lastSelectedSelectorPath = selectedElement ? getCssSelector(selectedElement) : lastSelectedSelectorPath; applyStyleChange('padding', value); }
             });
             document.getElementById('inspector-margin').addEventListener('change', (e) => {
                 const value = e.target.value.trim();
-                if (value) {
-                    lastSelectedSelectorPath = selectedElement ? getCssSelector(selectedElement) : lastSelectedSelectorPath;
-                    applyStyleChange('margin', value);
-                }
+                if (value) { lastSelectedSelectorPath = selectedElement ? getCssSelector(selectedElement) : lastSelectedSelectorPath; applyStyleChange('margin', value); }
             });
             document.getElementById('inspector-fontSize').addEventListener('change', (e) => {
                 const value = e.target.value.trim();
-                if (value) {
-                    lastSelectedSelectorPath = selectedElement ? getCssSelector(selectedElement) : lastSelectedSelectorPath;
-                    applyStyleChange('fontSize', value);
-                }
+                if (value) { lastSelectedSelectorPath = selectedElement ? getCssSelector(selectedElement) : lastSelectedSelectorPath; applyStyleChange('fontSize', value); }
             });
 
             // --- 初期プレビュー描画 ---
             updatePreview();
-
-            // 最初はコードタブ表示
             showMainTab('code');
+
+            // =========================
+            // 画像カラー分析タブ 初期化
+            // =========================
+            const stage = document.getElementById('image-stage');
+            const displayCanvas = document.getElementById('image-canvas');
+            const dctx = displayCanvas.getContext('2d');
+            const magnifierCanvas = document.getElementById('magnifier-canvas');
+            const mctx = magnifierCanvas.getContext('2d');
+            mctx.imageSmoothingEnabled = false;
+
+            const statusLine = document.getElementById('img-status');
+            const stageHint = document.getElementById('stage-hint');
+            const stageOverlay = document.getElementById('stage-overlay');
+
+            const fileInput = document.getElementById('img-file');
+            const urlInput = document.getElementById('img-url');
+            const urlBtn = document.getElementById('btn-load-url');
+            const eyedropBtn = document.getElementById('btn-eyedropper');
+            const canvasPickerBtn = document.getElementById('btn-canvas-picker');
+
+            const sourceCanvas = document.createElement('canvas');
+            const sctx = sourceCanvas.getContext('2d', { willReadFrequently: true });
+            sctx.imageSmoothingEnabled = false;
+
+            let imageObj = null;
+            let imageLoaded = false;
+            let drawnRect = { dx: 0, dy: 0, dw: 0, dh: 0 };
+            let pickMode = false;
+
+            const historyContainer = document.getElementById('history-list');
+            const currentSwatch = document.getElementById('current-swatch');
+            const currentColorText = document.getElementById('current-color-text');
+
+            const outHex = document.getElementById('hex-val');
+            const outHexa = document.getElementById('hexa-val');
+            const outRgb = document.getElementById('rgb-val');
+            const outHsl = document.getElementById('hsl-val');
+            const outLum = document.getElementById('luminance-val');
+            const outContB = document.getElementById('contrast-black');
+            const outContW = document.getElementById('contrast-white');
+            const sampleOnBlack = document.getElementById('contrast-on-black');
+            const sampleOnWhite = document.getElementById('contrast-on-white');
+
+            const pickedHistory = []; // {r,g,b,a}
+
+            function setStatus(msg) { statusLine.textContent = msg || ''; }
+
+            function enableEyedropperUI() {
+                if (!('EyeDropper' in window)) {
+                    eyedropBtn.disabled = true;
+                    eyedropBtn.title = 'このブラウザは画面スポイトに未対応です';
+                }
+            }
+            enableEyedropperUI();
+
+            function loadImageFromFile(file) {
+                if (!file || !file.type || !file.type.startsWith('image/')) {
+                    setStatus('画像ファイルを選択してください');
+                    return;
+                }
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    loadImageFromSrc(e.target.result, false);
+                };
+                reader.readAsDataURL(file);
+            }
+
+            function loadImageFromSrc(src, remote) {
+                const img = new Image();
+                if (remote) img.crossOrigin = 'anonymous'; // CORS対応が必要
+                img.onload = () => {
+                    imageObj = img;
+                    imageLoaded = true;
+                    stageHint.style.display = 'none';
+                    setStatus(`画像を読み込みました: ${img.naturalWidth}×${img.naturalHeight}`);
+
+                    sourceCanvas.width = img.naturalWidth || img.width;
+                    sourceCanvas.height = img.naturalHeight || img.height;
+                    sctx.clearRect(0,0,sourceCanvas.width,sourceCanvas.height);
+                    sctx.drawImage(img, 0, 0);
+
+                    resizeImageStage(); // ここでdisplayCanvasも描画
+                };
+                img.onerror = () => {
+                    setStatus('画像を読み込めませんでした（URLの誤りやCORS制限の可能性があります）');
+                };
+                img.src = src;
+            }
+
+            function resizeImageStage() {
+                const rect = stage.getBoundingClientRect();
+                const w = Math.max(10, Math.floor(rect.width));
+                const h = Math.max(10, Math.floor(rect.height));
+                if (displayCanvas.width !== w || displayCanvas.height !== h) {
+                    displayCanvas.width = w;
+                    displayCanvas.height = h;
+                }
+                redrawDisplay();
+            }
+            window.resizeImageStage = resizeImageStage;
+
+            function redrawDisplay() {
+                dctx.clearRect(0,0,displayCanvas.width, displayCanvas.height);
+                if (!imageLoaded || !imageObj) return;
+                const iw = imageObj.naturalWidth || imageObj.width;
+                const ih = imageObj.naturalHeight || imageObj.height;
+                const sw = displayCanvas.width;
+                const sh = displayCanvas.height;
+                const scale = Math.min(sw/iw, sh/ih);
+                const dw = Math.max(1, Math.floor(iw * scale));
+                const dh = Math.max(1, Math.floor(ih * scale));
+                const dx = Math.floor((sw - dw)/2);
+                const dy = Math.floor((sh - dh)/2);
+                drawnRect = { dx, dy, dw, dh };
+                dctx.imageSmoothingEnabled = true;
+                dctx.drawImage(imageObj, dx, dy, dw, dh);
+            }
+
+            // キャンバス上の座標 -> 元画像のピクセル座標へ変換
+            function mapToImagePixel(clientX, clientY) {
+                const rect = displayCanvas.getBoundingClientRect();
+                const x = clientX - rect.left;
+                const y = clientY - rect.top;
+                if (!drawnRect) return null;
+                const { dx, dy, dw, dh } = drawnRect;
+                if (x < dx || y < dy || x >= dx + dw || y >= dy + dh) return null;
+                const nx = (x - dx) / dw;
+                const ny = (y - dy) / dh;
+                const px = Math.max(0, Math.min(sourceCanvas.width - 1, Math.floor(nx * sourceCanvas.width)));
+                const py = Math.max(0, Math.min(sourceCanvas.height - 1, Math.floor(ny * sourceCanvas.height)));
+                return { px, py, cx: x, cy: y };
+            }
+
+            function readPixel(px, py) {
+                try {
+                    const data = sctx.getImageData(px, py, 1, 1).data;
+                    return { r: data[0], g: data[1], b: data[2], a: data[3] / 255 };
+                } catch (e) {
+                    // CORSで汚染されたキャンバス等
+                    setStatus('キャンバスからの読み取りに失敗しました（CORS制限の可能性）');
+                    return null;
+                }
+            }
+
+            function drawMagnifier(px, py, cx, cy) {
+                const w = magnifierCanvas.width;
+                const h = magnifierCanvas.height;
+                const size = 21; // 21x21ピクセルを拡大
+                const half = Math.floor(size / 2);
+                const sx = Math.max(0, Math.min(sourceCanvas.width - size, px - half));
+                const sy = Math.max(0, Math.min(sourceCanvas.height - size, py - half));
+                mctx.clearRect(0,0,w,h);
+                mctx.imageSmoothingEnabled = false;
+                mctx.fillStyle = '#222'; mctx.fillRect(0,0,w,h);
+                mctx.drawImage(sourceCanvas, sx, sy, size, size, 0, 0, w, h);
+
+                // グリッド
+                mctx.strokeStyle = 'rgba(255,255,255,0.2)';
+                mctx.lineWidth = 1;
+                const step = w / size;
+                for (let i = 1; i < size; i++) {
+                    mctx.beginPath();
+                    mctx.moveTo(i*step, 0); mctx.lineTo(i*step, h); mctx.stroke();
+                    mctx.beginPath();
+                    mctx.moveTo(0, i*step); mctx.lineTo(w, i*step); mctx.stroke();
+                }
+                // 中心クロスヘア
+                mctx.strokeStyle = '#fff';
+                mctx.lineWidth = 2;
+                const cxLine = Math.floor(w/2) + 0.5;
+                const cyLine = Math.floor(h/2) + 0.5;
+                mctx.beginPath(); mctx.moveTo(cxLine, 0); mctx.lineTo(cxLine, h); mctx.stroke();
+                mctx.beginPath(); mctx.moveTo(0, cyLine); mctx.lineTo(w, cyLine); mctx.stroke();
+
+                // 位置（キャンバスの右下に寄せる）
+                const rect = stage.getBoundingClientRect();
+                const left = Math.min(rect.width - w - 10, Math.max(10, cx + 20));
+                const top  = Math.min(rect.height - h - 10, Math.max(10, cy + 20));
+                magnifierCanvas.style.left = left + 'px';
+                magnifierCanvas.style.top  = top + 'px';
+                magnifierCanvas.style.display = 'block';
+            }
+
+            function hideMagnifier() { magnifierCanvas.style.display = 'none'; }
+
+            function setPickMode(on) {
+                pickMode = on;
+                stage.classList.toggle('picking', on);
+                stageOverlay.style.display = on ? 'block' : 'none';
+                stageOverlay.style.borderColor = on ? '#40a0ff' : '#666';
+                setStatus(on ? 'キャンバススポイト: クリックで色を決定' : '');
+                if (!on) hideMagnifier();
+            }
+
+            // 出力更新
+            function setCurrentColor(col, pushHistory = false) {
+                if (!col) return;
+                const { r, g, b, a } = col;
+                const hex = rgbToHex(r,g,b);
+                const hexa = rgbaToHex(r,g,b,a);
+                const rgb = toRgbString(r,g,b,a);
+                const hsl = toHslString(r,g,b,a);
+                const lum = relativeLuminance(r,g,b);
+                const contB = contrastRatio(lum, 0);
+                const contW = contrastRatio(1, lum);
+
+                currentSwatch.style.background = hexa;
+                currentColorText.textContent = `${hex} / ${rgb}`;
+
+                outHex.textContent = hex;
+                outHexa.textContent = hexa;
+                outRgb.textContent = rgb;
+                outHsl.textContent = hsl;
+                outLum.textContent = lum.toFixed(4);
+                outContB.textContent = contB.toFixed(2);
+                outContW.textContent = contW.toFixed(2);
+
+                // サンプル
+                sampleOnBlack.style.color = hexa;
+                sampleOnWhite.style.color = hexa;
+
+                if (pushHistory) {
+                    pickedHistory.unshift({ r, g, b, a });
+                    if (pickedHistory.length > 60) pickedHistory.pop();
+                    renderHistory();
+                }
+            }
+
+            function renderHistory() {
+                historyContainer.innerHTML = '';
+                pickedHistory.forEach((c, idx) => {
+                    const d = document.createElement('button');
+                    d.className = 'history-item';
+                    d.style.background = rgbaToHex(c.r, c.g, c.b, c.a);
+                    d.title = rgbToHex(c.r, c.g, c.b);
+                    d.addEventListener('click', () => setCurrentColor(c, false));
+                    historyContainer.appendChild(d);
+                });
+            }
+
+            // 画像入力
+            fileInput.addEventListener('change', (e) => {
+                const file = e.target.files && e.target.files[0];
+                if (file) loadImageFromFile(file);
+            });
+            urlBtn.addEventListener('click', () => {
+                const url = urlInput.value.trim();
+                if (!url) { setStatus('画像URLを入力してください'); return; }
+                loadImageFromSrc(url, true);
+            });
+
+            // D&D
+            stage.addEventListener('dragover', (e) => { e.preventDefault(); stageOverlay.style.display = 'block'; });
+            stage.addEventListener('dragleave', (e) => { stageOverlay.style.display = pickMode ? 'block' : 'none'; });
+            stage.addEventListener('drop', (e) => {
+                e.preventDefault();
+                stageOverlay.style.display = pickMode ? 'block' : 'none';
+                const file = e.dataTransfer.files && e.dataTransfer.files[0];
+                if (file) loadImageFromFile(file);
+            });
+
+            // EyeDropper（画面スポイト）
+            eyedropBtn.addEventListener('click', async () => {
+                if (!('EyeDropper' in window)) return;
+                try {
+                    const ed = new window.EyeDropper();
+                    const res = await ed.open();
+                    // res.sRGBHex は #RRGGBB
+                    const col = hexToRgba(res.sRGBHex);
+                    setCurrentColor(col, true);
+                    setStatus('画面スポイトで色を取得しました');
+                } catch (e) {
+                    // キャンセルされた場合など
+                    setStatus('画面スポイトをキャンセルしました');
+                }
+            });
+
+            // キャンバススポイト
+            canvasPickerBtn.addEventListener('click', () => {
+                if (!imageLoaded) { setStatus('先に画像を読み込んでください'); return; }
+                setPickMode(!pickMode);
+                canvasPickerBtn.textContent = pickMode ? 'キャンバススポイト終了' : 'キャンバススポイト';
+            });
+
+            displayCanvas.addEventListener('mousemove', (e) => {
+                if (!pickMode || !imageLoaded) return;
+                const map = mapToImagePixel(e.clientX, e.clientY);
+                if (!map) { hideMagnifier(); return; }
+                const pix = readPixel(map.px, map.py);
+                if (!pix) { hideMagnifier(); return; }
+                drawMagnifier(map.px, map.py, map.cx, map.cy);
+            });
+
+            displayCanvas.addEventListener('mouseleave', () => {
+                if (pickMode) hideMagnifier();
+            });
+
+            displayCanvas.addEventListener('click', (e) => {
+                if (!pickMode || !imageLoaded) return;
+                const map = mapToImagePixel(e.clientX, e.clientY);
+                if (!map) return;
+                const pix = readPixel(map.px, map.py);
+                if (!pix) return;
+                setCurrentColor(pix, true);
+                setStatus('色を取得しました（クリックで確定）');
+            });
+
+            // リサイズ追従
+            const ro = new ResizeObserver(() => resizeImageStage());
+            ro.observe(stage);
+
+            // コピー
+            document.querySelectorAll('.copy-btn').forEach(btn => {
+                btn.addEventListener('click', async () => {
+                    const id = btn.getAttribute('data-copy-target');
+                    const el = document.getElementById(id);
+                    if (!el) return;
+                    try {
+                        await navigator.clipboard.writeText(el.textContent.trim());
+                        setStatus('クリップボードにコピーしました');
+                    } catch {
+                        setStatus('コピーに失敗しました');
+                    }
+                });
+            });
+
+            // 初期文言
+            setStatus('画像を読み込むとスポイトが使えます');
+
+            // ===========
+            // 色変換系
+            // ===========
+            function clamp01(x){ return Math.min(1, Math.max(0, x)); }
+            function pad2(n){ return n.toString(16).padStart(2, '0').toUpperCase(); }
+
+            function rgbToHex(r,g,b){ return '#' + pad2(r) + pad2(g) + pad2(b); }
+            function rgbaToHex(r,g,b,a=1){
+                const aa = Math.round(clamp01(a) * 255);
+                return '#' + pad2(r) + pad2(g) + pad2(b) + pad2(aa);
+            }
+            function hexToRgba(hex){
+                let h = hex.replace('#','').trim();
+                if (h.length === 3) {
+                    const r = parseInt(h[0]+h[0],16), g = parseInt(h[1]+h[1],16), b = parseInt(h[2]+h[2],16);
+                    return { r, g, b, a: 1 };
+                } else if (h.length === 6) {
+                    const r = parseInt(h.slice(0,2),16), g = parseInt(h.slice(2,4),16), b = parseInt(h.slice(4,6),16);
+                    return { r, g, b, a: 1 };
+                } else if (h.length === 8) {
+                    const r = parseInt(h.slice(0,2),16), g = parseInt(h.slice(2,4),16), b = parseInt(h.slice(4,6),16), a = parseInt(h.slice(6,8),16)/255;
+                    return { r, g, b, a };
+                }
+                return { r:0,g:0,b:0,a:1 };
+            }
+            function toRgbString(r,g,b,a=1){
+                const aa = clamp01(a);
+                if (aa < 1) return `rgb(${r} ${g} ${b} / ${+(aa*100).toFixed(1)}%)`;
+                return `rgb(${r} ${g} ${b})`;
+            }
+            function toHslString(r,g,b,a=1){
+                // 0..255 -> 0..1
+                const R = r/255, G = g/255, B = b/255;
+                const max = Math.max(R,G,B), min = Math.min(R,G,B);
+                let h, s, l = (max+min)/2;
+                if (max === min) { h = 0; s = 0; }
+                else {
+                    const d = max - min;
+                    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+                    switch (max) {
+                        case R: h = (G - B) / d + (G < B ? 6 : 0); break;
+                        case G: h = (B - R) / d + 2; break;
+                        case B: h = (R - G) / d + 4; break;
+                    }
+                    h /= 6;
+                }
+                const hh = Math.round((h*360) % 360);
+                const ss = Math.round(s*100);
+                const ll = Math.round(l*100);
+                const aa = clamp01(a);
+                if (aa < 1) return `hsl(${hh} ${ss}% ${ll}% / ${+(aa*100).toFixed(1)}%)`;
+                return `hsl(${hh} ${ss}% ${ll}%)`;
+            }
+            function srgbToLinear(c){
+                c /= 255;
+                return c <= 0.04045 ? c/12.92 : Math.pow((c+0.055)/1.055, 2.4);
+            }
+            function relativeLuminance(r,g,b){
+                const R = srgbToLinear(r*255/255), G = srgbToLinear(g*255/255), B = srgbToLinear(b*255/255);
+                return 0.2126*R + 0.7152*G + 0.0722*B;
+            }
+            function contrastRatio(l1, l2){
+                const L1 = Math.max(l1,l2), L2 = Math.min(l1,l2);
+                return (L1 + 0.05) / (L2 + 0.05);
+            }
         });
     </script>
 </body>
