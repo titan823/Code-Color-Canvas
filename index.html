@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -167,13 +168,6 @@
             padding: 15px;
             overflow-y: auto;
         }
-        .inspector-panel h3 {
-            margin: 0 0 10px 0;
-            padding-bottom: 5px;
-            border-bottom: 1px solid var(--border-1);
-            font-size: 1em;
-            color: #fff;
-        }
         .inspector-item {
             margin-bottom: 12px;
             display: flex;
@@ -186,13 +180,18 @@
             font-size: 0.9em;
             color: var(--muted);
         }
-        .inspector-item input[type="text"] {
+        .inspector-item input[type="text"],
+        .inspector-item textarea {
             background-color: #3c3c3c;
             border: 1px solid #555;
             color: #f0f0f0;
             padding: 6px 8px;
             border-radius: 3px;
             flex: 1 1 240px;
+        }
+        .inspector-item textarea {
+            min-height: 60px;
+            resize: vertical;
         }
         .color-swatch {
             width: 18px;
@@ -216,6 +215,21 @@
             border-color: #8e2a2a;
             color: var(--ng);
         }
+        .inspector-actions {
+            display: inline-flex;
+            gap: 6px;
+            align-items: center;
+        }
+        .btn {
+            background: var(--panel-2);
+            border: 1px solid #555;
+            color: #eee;
+            padding: 6px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .btn:hover { background: #3a3a3a; }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
         /* プレースホルダー */
         #inspector-placeholder {
@@ -258,7 +272,7 @@
                 </div>
             </section>
 
-            <!-- プレビュ・変更タブ -->
+            <!-- プレビュー・変更タブ -->
             <section id="preview-page" class="tab-page">
                 <div class="panel preview-inspector-panel">
                     <div class="preview-panel">
@@ -268,37 +282,58 @@
                     <div class="inspector-panel">
                         <div class="panel-header">インスペクター</div>
                         <div id="inspector-content">
-                            <p id="inspector-placeholder">プレビュー内の要素をクリックすると、ここでスタイルを編集できます。</p>
+                            <p id="inspector-placeholder">プレビュー内の要素をクリックすると、ここでテキストやスタイルを編集できます。</p>
                             <div id="inspector-ui" style="display: none;">
                                 <div class="inspector-item">
                                     <label>選択中の要素</label>
                                     <b id="selected-element-selector"></b>
                                 </div>
 
+                                <!-- テキスト編集 -->
                                 <div class="inspector-item">
-                                    <label for="inspector-color">テキスト色</label>
-                                    <input type="text" id="inspector-color" placeholder="例: #ff8800, #ff880080, rgb(255 136 0 / 80%), hsl(30 100% 50%), rebeccapurple, color(display-p3 1 0.5 0)">
-                                    <span class="color-swatch" id="swatch-color"></span>
-                                    <span class="validity-badge" id="valid-color">未入力</span>
+                                    <label for="inspector-text">テキスト</label>
+                                    <textarea id="inspector-text" placeholder="選択した要素のテキストを編集"></textarea>
+                                    <div class="inspector-actions">
+                                        <label style="display:inline-flex; align-items:center; gap:6px; color:#ccc; font-size: 0.9em;">
+                                            <input type="checkbox" id="inspector-text-as-html"> HTMLとして編集
+                                        </label>
+                                        <button class="btn" id="apply-text">適用</button>
+                                    </div>
                                 </div>
 
+                                <!-- テキスト色 -->
+                                <div class="inspector-item">
+                                    <label for="inspector-color">テキスト色</label>
+                                    <input type="text" id="inspector-color" placeholder="例: #ff8800, rgb(255 136 0 / 80%), hsl(30 100% 50%), rebeccapurple, color(display-p3 1 0.5 0)">
+                                    <span class="color-swatch" id="swatch-color"></span>
+                                    <span class="validity-badge" id="valid-color">未入力</span>
+                                    <div class="inspector-actions">
+                                        <button class="btn" id="apply-color" disabled>適用</button>
+                                        <button class="btn" id="undo-color" disabled>元に戻す</button>
+                                    </div>
+                                </div>
+
+                                <!-- 背景色 -->
                                 <div class="inspector-item">
                                     <label for="inspector-bg">背景色</label>
                                     <input type="text" id="inspector-bg" placeholder="例: transparent, #222, rgba(0 0 0 / .4), lch(50 60 40)">
                                     <span class="color-swatch" id="swatch-bg"></span>
                                     <span class="validity-badge" id="valid-bg">未入力</span>
+                                    <div class="inspector-actions">
+                                        <button class="btn" id="apply-bg" disabled>適用</button>
+                                        <button class="btn" id="undo-bg" disabled>元に戻す</button>
+                                    </div>
                                 </div>
 
+                                <!-- ボックス系 -->
                                 <div class="inspector-item">
                                     <label for="inspector-padding">パディング</label>
                                     <input type="text" id="inspector-padding" placeholder="例: 10px / 8px 12px / 1rem 2rem">
                                 </div>
-
                                 <div class="inspector-item">
                                     <label for="inspector-margin">マージン</label>
                                     <input type="text" id="inspector-margin" placeholder="例: 10px auto / 0 16px">
                                 </div>
-
                                 <div class="inspector-item">
                                     <label for="inspector-fontSize">フォントサイズ</label>
                                     <input type="text" id="inspector-fontSize" placeholder="例: 16px / 1.2rem / clamp(14px, 2vw, 20px)">
@@ -316,6 +351,18 @@
             // --- グローバル ---
             let selectedElement = null;
             let lastHighlightedElement = null;
+            let lastSelectedSelectorPath = null; // プレビュー更新後の選択復元用
+
+            // 色の履歴（セレクタごと／プロパティごと）
+            // Map<string, { color: string[], backgroundColor: string[] }>
+            const colorHistory = new Map();
+
+            function getHistory(selector) {
+                if (!colorHistory.has(selector)) {
+                    colorHistory.set(selector, { color: [], backgroundColor: [] });
+                }
+                return colorHistory.get(selector);
+            }
 
             // --- CodeMirror 初期化 ---
             const htmlEditor = CodeMirror.fromTextArea(document.getElementById('html-code'), {
@@ -391,7 +438,6 @@ body {
                 if (name === 'code') {
                     document.querySelector(`.top-tab-button[onclick="showMainTab('code')"]`).classList.add('active');
                     document.getElementById('code-page').classList.add('active');
-                    // CodeMirror のサイズ再計算
                     htmlEditor.refresh();
                     cssEditor.refresh();
                     jsEditor.refresh();
@@ -440,10 +486,13 @@ ${htmlCode}
 
                 // プレビュー再構築後にイベントを再設定
                 setupInspectorListeners();
-                // 選択中の状態をリセット
-                selectedElement = null;
-                lastHighlightedElement = null;
-                showInspectorPlaceholder();
+
+                // 再選択を試みる（前回クリックしていた要素）
+                if (!restoreSelection()) {
+                    selectedElement = null;
+                    lastHighlightedElement = null;
+                    showInspectorPlaceholder();
+                }
             }
 
             htmlEditor.on('change', updatePreview);
@@ -457,8 +506,6 @@ ${htmlCode}
                 const pbody = pdoc && pdoc.body;
                 if (!pbody) return;
 
-                // 既存のハンドラ衝突を避けるため、一旦クローンして差し替える方法もあるが、
-                // ここでは単純にクリックを新たに委任
                 pbody.addEventListener('click', (e) => {
                     e.preventDefault();
                     e.stopPropagation();
@@ -471,12 +518,29 @@ ${htmlCode}
                     selectedElement.style.outline = '2px solid #007acc';
                     lastHighlightedElement = selectedElement;
 
+                    lastSelectedSelectorPath = getCssSelector(selectedElement);
                     populateInspector(selectedElement);
                 }, { capture: true });
             }
 
+            function restoreSelection() {
+                if (!lastSelectedSelectorPath) return false;
+                const iframe = document.getElementById('preview-frame');
+                const pdoc = iframe.contentDocument || iframe.contentWindow.document;
+                if (!pdoc) return false;
+                const el = pdoc.querySelector(lastSelectedSelectorPath);
+                if (el) {
+                    if (lastHighlightedElement) lastHighlightedElement.style.outline = '';
+                    selectedElement = el;
+                    selectedElement.style.outline = '2px solid #007acc';
+                    lastHighlightedElement = selectedElement;
+                    populateInspector(selectedElement);
+                    return true;
+                }
+                return false;
+            }
+
             function getCssSelector(el) {
-                // クロスドキュメントでも動くよう instanceof は使わない
                 if (!el || el.nodeType !== 1) return '';
                 const parts = [];
                 while (el && el.nodeType === 1) {
@@ -486,11 +550,9 @@ ${htmlCode}
                         parts.unshift(selector);
                         break;
                     } else {
-                        // クラスがあれば最初の1つだけ付与（簡易）
                         if (el.classList && el.classList.length) {
                             selector += '.' + el.classList[0];
                         }
-                        // 同タイプの順序
                         let sib = el, nth = 1;
                         while (sib = sib.previousElementSibling) {
                             if (sib.nodeName.toLowerCase() === el.nodeName.toLowerCase()) nth++;
@@ -514,21 +576,25 @@ ${htmlCode}
 
                 const iframe = document.getElementById('preview-frame');
                 const pwin = iframe.contentWindow;
-
-                // 計算後スタイルを取得（iframe 側の getComputedStyle を使う）
                 const styles = pwin.getComputedStyle(element);
 
                 document.getElementById('selected-element-selector').textContent = getCssSelector(element);
 
-                // カラーは計算値（例: rgb(...) / rgba(...)）をそのまま表示
+                // テキスト初期表示（デフォルトはtextContent）
+                const textAsHTML = document.getElementById('inspector-text-as-html');
+                textAsHTML.checked = false;
+                document.getElementById('inspector-text').value = element.textContent ?? '';
+
+                // カラー表示
                 const colorInput = document.getElementById('inspector-color');
                 const bgInput = document.getElementById('inspector-bg');
                 colorInput.value = styles.color || '';
                 bgInput.value = styles.backgroundColor || '';
 
-                // バリデーション表示とスウォッチ
                 updateColorUI('color');
                 updateColorUI('bg');
+                updateApplyButtons();
+                updateUndoButtons();
 
                 // ボックス系
                 document.getElementById('inspector-padding').value = styles.padding || '';
@@ -571,10 +637,12 @@ ${htmlCode}
                     cssCode += `\n\n${selector} {\n    ${cssProperty}: ${value};\n}`;
                 }
 
+                // 選択を維持するためにセレクタを保存
+                lastSelectedSelectorPath = selector;
                 cssEditor.setValue(cssCode);
             }
 
-            // --- カラー入力（全CSS色表記対応：ブラウザが解釈できるものを妥当とする） ---
+            // --- カラー入力（全CSS色表記対応） ---
             function isValidCSSColor(value) {
                 const iframe = document.getElementById('preview-frame');
                 const pwin = iframe.contentWindow;
@@ -600,9 +668,7 @@ ${htmlCode}
                     swatch.style.background = 'transparent';
                     badge.textContent = '未入力';
                     badge.classList.remove('ok','ng');
-                    return;
-                }
-                if (isValidCSSColor(val)) {
+                } else if (isValidCSSColor(val)) {
                     swatch.style.background = val;
                     badge.textContent = 'OK';
                     badge.classList.add('ok');
@@ -613,36 +679,139 @@ ${htmlCode}
                     badge.classList.add('ng');
                     badge.classList.remove('ok');
                 }
+
+                updateApplyButtons();
             }
 
-            // 入力イベント: カラー
-            document.getElementById('inspector-color').addEventListener('input', (e) => {
-                const value = e.target.value.trim();
-                updateColorUI('color');
-                if (selectedElement && isValidCSSColor(value)) {
-                    applyStyleChange('color', value);
-                }
+            function updateApplyButtons() {
+                const colorVal = document.getElementById('inspector-color').value.trim();
+                const bgVal = document.getElementById('inspector-bg').value.trim();
+                document.getElementById('apply-color').disabled = !(selectedElement && isValidCSSColor(colorVal));
+                document.getElementById('apply-bg').disabled = !(selectedElement && isValidCSSColor(bgVal));
+            }
+
+            function updateUndoButtons() {
+                const selector = lastSelectedSelectorPath;
+                const entry = selector ? colorHistory.get(selector) : null;
+                document.getElementById('undo-color').disabled = !(entry && entry.color.length);
+                document.getElementById('undo-bg').disabled = !(entry && entry.backgroundColor.length);
+            }
+
+            // 入力イベント: カラー（UI更新のみ。適用はボタンで）
+            document.getElementById('inspector-color').addEventListener('input', () => updateColorUI('color'));
+            document.getElementById('inspector-bg').addEventListener('input', () => updateColorUI('bg'));
+
+            // 適用ボタン: テキスト色 / 背景色
+            document.getElementById('apply-color').addEventListener('click', () => commitColor('color'));
+            document.getElementById('apply-bg').addEventListener('click', () => commitColor('backgroundColor'));
+
+            // 元に戻す（Undo）: テキスト色 / 背景色（履歴から復元）
+            document.getElementById('undo-color').addEventListener('click', () => undoColor('color'));
+            document.getElementById('undo-bg').addEventListener('click', () => undoColor('backgroundColor'));
+
+            function commitColor(prop) {
+                if (!selectedElement) return;
+                const input = document.getElementById(prop === 'color' ? 'inspector-color' : 'inspector-bg');
+                const val = input.value.trim();
+                if (!isValidCSSColor(val)) return;
+
+                const selector = getCssSelector(selectedElement);
+                lastSelectedSelectorPath = selector;
+
+                const iframe = document.getElementById('preview-frame');
+                const pwin = iframe.contentWindow;
+                const styles = pwin.getComputedStyle(selectedElement);
+                const prev = prop === 'color' ? styles.color : styles.backgroundColor;
+
+                // 履歴に積む
+                const h = getHistory(selector);
+                h[prop].push(prev);
+                updateUndoButtons();
+
+                // 実際に反映（CSSソースも更新）
+                applyStyleChange(prop, val);
+            }
+
+            function undoColor(prop) {
+                const selector = lastSelectedSelectorPath;
+                if (!selector) return;
+                const h = colorHistory.get(selector);
+                if (!h || !h[prop] || !h[prop].length) return;
+
+                const prev = h[prop].pop();
+                updateUndoButtons();
+
+                // 入力欄も更新
+                const input = document.getElementById(prop === 'color' ? 'inspector-color' : 'inspector-bg');
+                input.value = prev || '';
+                updateColorUI(prop === 'color' ? 'color' : 'bg');
+
+                // CSSへ反映（これがプレビューも更新）
+                // 選択維持のため、事前にlastSelectedSelectorPathが設定されていることを確認
+                applyStyleChange(prop, prev);
+            }
+
+            // テキスト編集
+            const textArea = document.getElementById('inspector-text');
+            const textAsHTML = document.getElementById('inspector-text-as-html');
+            const applyTextBtn = document.getElementById('apply-text');
+
+            // 表示モード切り替え時（textContent / innerHTML）に値を入れ替え
+            textAsHTML.addEventListener('change', () => {
+                if (!selectedElement) return;
+                textArea.value = textAsHTML.checked ? (selectedElement.innerHTML ?? '') : (selectedElement.textContent ?? '');
             });
-            document.getElementById('inspector-bg').addEventListener('input', (e) => {
-                const value = e.target.value.trim();
-                updateColorUI('bg');
-                if (selectedElement && isValidCSSColor(value)) {
-                    applyStyleChange('backgroundColor', value);
+
+            // テキスト適用（HTMLエディタのソースにも反映）
+            applyTextBtn.addEventListener('click', () => {
+                if (!selectedElement) return;
+                const selector = getCssSelector(selectedElement);
+                lastSelectedSelectorPath = selector;
+
+                const value = textArea.value ?? '';
+
+                // プレビューに即時反映
+                if (textAsHTML.checked) {
+                    selectedElement.innerHTML = value;
+                } else {
+                    selectedElement.textContent = value;
+                }
+
+                // HTMLソースを更新（DOMとして編集してからエディタへ反映）
+                const wrapper = document.createElement('div');
+                wrapper.innerHTML = htmlEditor.getValue();
+                const target = wrapper.querySelector(selector);
+                if (target) {
+                    if (textAsHTML.checked) {
+                        target.innerHTML = value;
+                    } else {
+                        target.textContent = value;
+                    }
+                    htmlEditor.setValue(wrapper.innerHTML.trim());
                 }
             });
 
             // 入力イベント: ボックス系（変更確定時に反映）
             document.getElementById('inspector-padding').addEventListener('change', (e) => {
                 const value = e.target.value.trim();
-                if (value) applyStyleChange('padding', value);
+                if (value) {
+                    lastSelectedSelectorPath = selectedElement ? getCssSelector(selectedElement) : lastSelectedSelectorPath;
+                    applyStyleChange('padding', value);
+                }
             });
             document.getElementById('inspector-margin').addEventListener('change', (e) => {
                 const value = e.target.value.trim();
-                if (value) applyStyleChange('margin', value);
+                if (value) {
+                    lastSelectedSelectorPath = selectedElement ? getCssSelector(selectedElement) : lastSelectedSelectorPath;
+                    applyStyleChange('margin', value);
+                }
             });
             document.getElementById('inspector-fontSize').addEventListener('change', (e) => {
                 const value = e.target.value.trim();
-                if (value) applyStyleChange('fontSize', value);
+                if (value) {
+                    lastSelectedSelectorPath = selectedElement ? getCssSelector(selectedElement) : lastSelectedSelectorPath;
+                    applyStyleChange('fontSize', value);
+                }
             });
 
             // --- 初期プレビュー描画 ---
