@@ -32,7 +32,7 @@
         html, body { height: 100%; }
         body {
             margin: 0;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, "Noto Sans JP", "Hiragino Kaku Gothic ProN", Meiryo, sans-serif;
             background-color: var(--bg);
             color: var(--text);
             display: flex;
@@ -92,7 +92,7 @@
             min-height: 0;
         }
 
-        /* パネル */
+        /* パネル共通 */
         .panel-header {
             background-color: var(--panel-3);
             padding: 8px 12px;
@@ -145,15 +145,29 @@
             display: block;
         }
 
-        /* プレビュー＆インスペクター */
-        .preview-inspector-panel {
+        /* プレビュー・変更（左右分割） */
+        .split-container {
+            display: flex;
             flex: 1;
             min-height: 0;
-            border-left: none;
         }
-        .preview-panel {
-            height: 65%;
-            min-height: 120px;
+        .split-left, .split-right {
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+        }
+        .split-left {
+            flex: 1 1 55%;
+            border-right: 2px solid var(--border-1);
+            min-width: 320px;
+        }
+        .split-right {
+            flex: 1 1 45%;
+            min-width: 320px;
+        }
+        .frame-wrap {
+            flex: 1;
+            min-height: 0;
         }
         #preview-frame {
             width: 100%;
@@ -161,10 +175,11 @@
             border: none;
             background-color: #fff;
         }
-        .inspector-panel {
-            height: 35%;
+
+        /* インスペクター */
+        .inspector-body {
+            flex: 1;
             background-color: var(--panel);
-            border-top: 2px solid var(--border-1);
             padding: 15px;
             overflow-y: auto;
         }
@@ -213,7 +228,7 @@
         }
         .validity-badge.ng {
             border-color: #8e2a2a;
-            color: var(--ng);
+            color: #f26d6d;
         }
         .inspector-actions {
             display: inline-flex;
@@ -272,16 +287,18 @@
                 </div>
             </section>
 
-            <!-- プレビュー・変更タブ -->
+            <!-- プレビュー・変更タブ（左右分割） -->
             <section id="preview-page" class="tab-page">
-                <div class="panel preview-inspector-panel">
-                    <div class="preview-panel">
+                <div class="split-container">
+                    <div class="split-left">
                         <div class="panel-header">プレビュー</div>
-                        <iframe id="preview-frame"></iframe>
+                        <div class="frame-wrap">
+                            <iframe id="preview-frame"></iframe>
+                        </div>
                     </div>
-                    <div class="inspector-panel">
+                    <div class="split-right">
                         <div class="panel-header">インスペクター</div>
-                        <div id="inspector-content">
+                        <div class="inspector-body">
                             <p id="inspector-placeholder">プレビュー内の要素をクリックすると、ここでテキストやスタイルを編集できます。</p>
                             <div id="inspector-ui" style="display: none;">
                                 <div class="inspector-item">
@@ -310,6 +327,7 @@
                                     <div class="inspector-actions">
                                         <button class="btn" id="apply-color" disabled>適用</button>
                                         <button class="btn" id="undo-color" disabled>元に戻す</button>
+                                        <button class="btn" id="redo-color" disabled>やり直す</button>
                                     </div>
                                 </div>
 
@@ -322,6 +340,7 @@
                                     <div class="inspector-actions">
                                         <button class="btn" id="apply-bg" disabled>適用</button>
                                         <button class="btn" id="undo-bg" disabled>元に戻す</button>
+                                        <button class="btn" id="redo-bg" disabled>やり直す</button>
                                     </div>
                                 </div>
 
@@ -353,13 +372,16 @@
             let lastHighlightedElement = null;
             let lastSelectedSelectorPath = null; // プレビュー更新後の選択復元用
 
-            // 色の履歴（セレクタごと／プロパティごと）
-            // Map<string, { color: string[], backgroundColor: string[] }>
+            // 色の履歴（セレクタごと／プロパティごと）: Undo/Redo スタック
+            // Map<string, { color: {undo:string[], redo:string[]}, backgroundColor: {undo:string[], redo:string[]} }>
             const colorHistory = new Map();
 
             function getHistory(selector) {
                 if (!colorHistory.has(selector)) {
-                    colorHistory.set(selector, { color: [], backgroundColor: [] });
+                    colorHistory.set(selector, {
+                        color: { undo: [], redo: [] },
+                        backgroundColor: { undo: [], redo: [] }
+                    });
                 }
                 return colorHistory.get(selector);
             }
@@ -510,9 +532,7 @@ ${htmlCode}
                     e.preventDefault();
                     e.stopPropagation();
 
-                    if (lastHighlightedElement) {
-                        lastHighlightedElement.style.outline = '';
-                    }
+                    if (lastHighlightedElement) lastHighlightedElement.style.outline = '';
 
                     selectedElement = e.target;
                     selectedElement.style.outline = '2px solid #007acc';
@@ -528,7 +548,8 @@ ${htmlCode}
                 const iframe = document.getElementById('preview-frame');
                 const pdoc = iframe.contentDocument || iframe.contentWindow.document;
                 if (!pdoc) return false;
-                const el = pdoc.querySelector(lastSelectedSelectorPath);
+                let el = null;
+                try { el = pdoc.querySelector(lastSelectedSelectorPath); } catch (_) {}
                 if (el) {
                     if (lastHighlightedElement) lastHighlightedElement.style.outline = '';
                     selectedElement = el;
@@ -594,7 +615,7 @@ ${htmlCode}
                 updateColorUI('color');
                 updateColorUI('bg');
                 updateApplyButtons();
-                updateUndoButtons();
+                updateHistoryButtons();
 
                 // ボックス系
                 document.getElementById('inspector-padding').value = styles.padding || '';
@@ -679,7 +700,6 @@ ${htmlCode}
                     badge.classList.add('ng');
                     badge.classList.remove('ok');
                 }
-
                 updateApplyButtons();
             }
 
@@ -690,11 +710,19 @@ ${htmlCode}
                 document.getElementById('apply-bg').disabled = !(selectedElement && isValidCSSColor(bgVal));
             }
 
-            function updateUndoButtons() {
+            function updateHistoryButtons() {
                 const selector = lastSelectedSelectorPath;
                 const entry = selector ? colorHistory.get(selector) : null;
-                document.getElementById('undo-color').disabled = !(entry && entry.color.length);
-                document.getElementById('undo-bg').disabled = !(entry && entry.backgroundColor.length);
+
+                const canUndoColor = !!(entry && entry.color.undo.length);
+                const canUndoBg = !!(entry && entry.backgroundColor.undo.length);
+                const canRedoColor = !!(entry && entry.color.redo.length);
+                const canRedoBg = !!(entry && entry.backgroundColor.redo.length);
+
+                document.getElementById('undo-color').disabled = !canUndoColor;
+                document.getElementById('undo-bg').disabled = !canUndoBg;
+                document.getElementById('redo-color').disabled = !canRedoColor;
+                document.getElementById('redo-bg').disabled = !canRedoBg;
             }
 
             // 入力イベント: カラー（UI更新のみ。適用はボタンで）
@@ -705,9 +733,11 @@ ${htmlCode}
             document.getElementById('apply-color').addEventListener('click', () => commitColor('color'));
             document.getElementById('apply-bg').addEventListener('click', () => commitColor('backgroundColor'));
 
-            // 元に戻す（Undo）: テキスト色 / 背景色（履歴から復元）
+            // 元に戻す / やり直す
             document.getElementById('undo-color').addEventListener('click', () => undoColor('color'));
             document.getElementById('undo-bg').addEventListener('click', () => undoColor('backgroundColor'));
+            document.getElementById('redo-color').addEventListener('click', () => redoColor('color'));
+            document.getElementById('redo-bg').addEventListener('click', () => redoColor('backgroundColor'));
 
             function commitColor(prop) {
                 if (!selectedElement) return;
@@ -723,10 +753,12 @@ ${htmlCode}
                 const styles = pwin.getComputedStyle(selectedElement);
                 const prev = prop === 'color' ? styles.color : styles.backgroundColor;
 
-                // 履歴に積む
+                // 履歴に積む（Undo）、Redoはクリア（新規分岐）
                 const h = getHistory(selector);
-                h[prop].push(prev);
-                updateUndoButtons();
+                h[prop].undo.push(prev);
+                h[prop].redo.length = 0;
+
+                updateHistoryButtons();
 
                 // 実際に反映（CSSソースも更新）
                 applyStyleChange(prop, val);
@@ -736,19 +768,50 @@ ${htmlCode}
                 const selector = lastSelectedSelectorPath;
                 if (!selector) return;
                 const h = colorHistory.get(selector);
-                if (!h || !h[prop] || !h[prop].length) return;
+                if (!h || !h[prop] || !h[prop].undo.length) return;
 
-                const prev = h[prop].pop();
-                updateUndoButtons();
+                // 現在値をRedoスタックに積む
+                const iframe = document.getElementById('preview-frame');
+                const pwin = iframe.contentWindow;
+                const styles = pwin.getComputedStyle(selectedElement);
+                const currentVal = prop === 'color' ? styles.color : styles.backgroundColor;
+                h[prop].redo.push(currentVal);
+
+                // 直前の値を取り出して適用
+                const prev = h[prop].undo.pop();
 
                 // 入力欄も更新
                 const input = document.getElementById(prop === 'color' ? 'inspector-color' : 'inspector-bg');
                 input.value = prev || '';
                 updateColorUI(prop === 'color' ? 'color' : 'bg');
 
-                // CSSへ反映（これがプレビューも更新）
-                // 選択維持のため、事前にlastSelectedSelectorPathが設定されていることを確認
                 applyStyleChange(prop, prev);
+                updateHistoryButtons();
+            }
+
+            function redoColor(prop) {
+                const selector = lastSelectedSelectorPath;
+                if (!selector) return;
+                const h = colorHistory.get(selector);
+                if (!h || !h[prop] || !h[prop].redo.length) return;
+
+                // 現在値をUndoスタックに積む
+                const iframe = document.getElementById('preview-frame');
+                const pwin = iframe.contentWindow;
+                const styles = pwin.getComputedStyle(selectedElement);
+                const currentVal = prop === 'color' ? styles.color : styles.backgroundColor;
+                h[prop].undo.push(currentVal);
+
+                // Redoスタックから取り出して適用
+                const nextVal = h[prop].redo.pop();
+
+                // 入力欄も更新
+                const input = document.getElementById(prop === 'color' ? 'inspector-color' : 'inspector-bg');
+                input.value = nextVal || '';
+                updateColorUI(prop === 'color' ? 'color' : 'bg');
+
+                applyStyleChange(prop, nextVal);
+                updateHistoryButtons();
             }
 
             // テキスト編集
@@ -761,6 +824,13 @@ ${htmlCode}
                 if (!selectedElement) return;
                 textArea.value = textAsHTML.checked ? (selectedElement.innerHTML ?? '') : (selectedElement.textContent ?? '');
             });
+
+            // HTMLソース内の要素を見つけやすくするためのセレクタ補正（body相対に寄せる）
+            function toBodyRelativeSelector(sel) {
+                return sel
+                    .replace(/^html\s*>\s*body\s*>\s*/i, '')
+                    .replace(/^body\s*>\s*/i, '');
+            }
 
             // テキスト適用（HTMLエディタのソースにも反映）
             applyTextBtn.addEventListener('click', () => {
@@ -780,7 +850,17 @@ ${htmlCode}
                 // HTMLソースを更新（DOMとして編集してからエディタへ反映）
                 const wrapper = document.createElement('div');
                 wrapper.innerHTML = htmlEditor.getValue();
-                const target = wrapper.querySelector(selector);
+
+                let target = null;
+                try { target = wrapper.querySelector(selector); } catch (_) {}
+                if (!target) {
+                    const rel = toBodyRelativeSelector(selector);
+                    try { target = wrapper.querySelector(rel); } catch (_) {}
+                }
+                if (!target && selectedElement.id) {
+                    try { target = wrapper.querySelector('#' + selectedElement.id); } catch (_) {}
+                }
+
                 if (target) {
                     if (textAsHTML.checked) {
                         target.innerHTML = value;
