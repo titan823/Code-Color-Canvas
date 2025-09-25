@@ -231,19 +231,18 @@
 
     /* 画像カラー分析タブ */
     .img-toolbar {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
         padding: 8px 12px;
         background: var(--panel-2);
         border-bottom: 1px solid var(--border-1);
     }
     .toolbar-row {
         display: flex;
-        align-items: center;
         gap: 8px;
+        align-items: center;
         flex-wrap: wrap;
-        margin-bottom: 8px;
-    }
-    .toolbar-row:last-child {
-        margin-bottom: 0;
     }
     .img-toolbar input[type="text"] {
         background: #3c3c3c; border: 1px solid #555; color: #f0f0f0; padding: 6px 8px; border-radius: 3px;
@@ -257,12 +256,16 @@
     .img-chip {
         padding: 4px 10px; border: 1px solid #555; border-radius: 16px; background: #2f2f2f; color: #ddd; cursor: pointer;
     }
-    .img-chip.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+    .img-chip.active {
+        background: var(--accent); border-color: var(--accent); color: #fff;
+    }
     .img-stage {
         position: relative; flex: 1; min-height: 0;
         background: conic-gradient(#eee 25%, #fff 0 50%, #eee 0 75%, #fff 0) 0 0 / 16px 16px;
     }
-    #image-canvas { width: 100%; height: 100%; display: block; background: transparent; }
+    #image-canvas {
+        width: 100%; height: 100%; display: block; background: transparent;
+    }
     #magnifier-canvas {
         position: absolute; width: 140px; height: 140px;
         border: 1px solid #666; border-radius: 6px; box-shadow: 0 6px 18px var(--shadow);
@@ -303,8 +306,8 @@
     }
     .touch-offset-group input[type="number"] { padding: 2px 4px; width: 70px; }
 
-    /* ブラシ設定 / 調整設定 */
-    .brush-settings, .adjust-settings {
+    /* ブラシ設定 */
+    .brush-settings {
         padding: 8px 12px;
         background: var(--panel-2);
         border-bottom: 1px solid var(--border-1);
@@ -313,28 +316,63 @@
         align-items: center;
         flex-wrap: wrap;
     }
-    .brush-settings label, .adjust-settings label { display: flex; align-items: center; gap: 6px; }
-    .brush-settings input[type="range"], .adjust-settings input[type="range"] { width: 140px; }
+    .brush-settings label { display: flex; align-items: center; gap: 6px; }
+    .brush-settings input[type="range"] { width: 140px; }
+
+    /* 色調整設定 */
+    .adjust-settings {
+        padding: 8px 12px;
+        background: var(--panel-2);
+        border-bottom: 1px solid var(--border-1);
+        display: flex;
+        gap: 16px;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+    .adjust-item { display: flex; align-items: center; gap: 8px; }
+    .adjust-item input[type="range"] { width: 160px; }
 
     /* ポインターマーカー */
     #pointer-marker {
         position: absolute;
-        width: 24px; height: 24px;
-        border: 2px solid #00ff00; border-radius: 50%;
+        width: 24px;
+        height: 24px;
+        border: 2px solid #00ff00;
+        border-radius: 50%;
         transform: translate(-50%, -50%);
-        pointer-events: none; z-index: 1000; display: none;
+        pointer-events: none;
+        z-index: 1000;
+        display: none;
     }
-    #pointer-marker::before, #pointer-marker::after {
-        content: ''; position: absolute; background: #00ff00;
+    #pointer-marker::before,
+    #pointer-marker::after {
+        content: '';
+        position: absolute;
+        background: #00ff00;
     }
-    #pointer-marker::before { width: 2px; height: 8px; left: 50%; top: -10px; transform: translateX(-50%); }
-    #pointer-marker::after { width: 8px; height: 2px; left: -10px; top: 50%; transform: translateY(-50%); }
+    #pointer-marker::before {
+        width: 2px;
+        height: 8px;
+        left: 50%;
+        top: -10px;
+        transform: translateX(-50%);
+    }
+    #pointer-marker::after {
+        width: 8px;
+        height: 2px;
+        left: -10px;
+        top: 50%;
+        transform: translateY(-50%);
+    }
 
     /* ブラシプレビュー */
     #brush-preview {
         position: absolute;
-        border: 2px solid rgba(255,255,255,0.8); border-radius: 50%;
-        pointer-events: none; z-index: 999; display: none;
+        border: 2px solid rgba(255,255,255,0.8);
+        border-radius: 50%;
+        pointer-events: none;
+        z-index: 999;
+        display: none;
         box-shadow: 0 0 0 1px rgba(0,0,0,0.5);
         transform: translate(-50%, -50%);
     }
@@ -342,8 +380,10 @@
     /* オフセットライン */
     #offset-line {
         position: absolute;
-        border-left: 1px dashed rgba(255,255,255,0.5);
-        pointer-events: none; z-index: 998; display: none;
+        border-left: 1px dashed rgba(255,255,255,0.6);
+        pointer-events: none;
+        z-index: 998;
+        display: none;
         transform-origin: top left;
     }
 </style>
@@ -463,47 +503,54 @@ Code Color Canvas
                 <div class="split-left">
                     <div class="panel-header">画像</div>
 
-                    <!-- 段落1：読み込み -->
+                    <!-- 段落1：読み込み系 -->
                     <div class="img-toolbar">
                         <div class="toolbar-row">
                             <input type="file" id="img-file" accept="image/*" multiple>
                             <input type="text" id="img-url" placeholder="画像URL（CORS対応のもの）">
                             <button class="btn" id="btn-load-url">読込</button>
-                            <span class="note">最大10枚まで同時管理・番号で切替</span>
                         </div>
-                        <!-- 段落2：スポイト・ブラシ・オフセット -->
+
+                        <!-- 段落2：ツール系（画面スポイトを別段落に） -->
                         <div class="toolbar-row">
                             <button class="btn" id="btn-eyedropper" title="対応ブラウザのみ">画面スポイト</button>
                             <button class="btn" id="btn-canvas-picker">キャンバススポイト</button>
                             <button class="btn" id="btn-blur-brush">ボカシブラシ</button>
                             <div class="touch-offset-group">
                                 <label><input type="checkbox" id="touch-offset-enabled" checked>タッチオフセット</label>
-                                <input type="number" id="touch-offset-value" value="100" min="0" max="300">
+                                <input type="number" id="touch-offset-value" value="100" min="0" max="400">
                                 <span>px</span>
                             </div>
+                            <span class="note">最大10枚まで同時管理・番号で切替</span>
                         </div>
                     </div>
 
-                    <!-- ブラシ設定 -->
+                    <!-- ボカシ設定 -->
                     <div class="brush-settings" id="blur-brush-settings" style="display: none;">
                         <label>ブラシサイズ: <span id="brush-size-display">20</span>px</label>
-                        <input type="range" id="brush-size" min="5" max="160" value="20">
-                        <label>ボカシ強度: <span id="blur-strength-display">10</span>px</label>
+                        <input type="range" id="brush-size" min="5" max="100" value="20">
+                        <label>ボカシ強度: <span id="blur-strength-display">10</span></label>
+                        <!-- 強度上限を大幅引き上げ -->
                         <input type="range" id="blur-strength" min="1" max="100" value="10">
-                        <button class="btn" id="btn-undo-blur" disabled>編集を元に戻す</button>
-                        <button class="btn" id="btn-reset-blur" disabled>画像をリセット</button>
+                        <button class="btn" id="btn-undo-blur" disabled>元に戻す</button>
+                        <button class="btn" id="btn-reset-blur" disabled>リセット</button>
                     </div>
 
-                    <!-- 調整設定（彩度・輝度） -->
+                    <!-- 色調整（彩度・輝度） -->
                     <div class="adjust-settings" id="adjust-settings">
-                        <label>彩度: <span id="sat-display">100</span>%</label>
-                        <input type="range" id="sat-slider" min="0" max="300" value="100">
-                        <label>輝度: <span id="bright-display">0</span></label>
-                        <input type="range" id="bright-slider" min="-100" max="100" value="0">
-                        <button class="btn" id="btn-reset-adjust">調整リセット</button>
+                        <div class="adjust-item">
+                            <label>彩度: <span id="sat-display">0</span>%</label>
+                            <input type="range" id="sat-slider" min="-100" max="100" value="0">
+                        </div>
+                        <div class="adjust-item">
+                            <label>輝度: <span id="bri-display">0</span>%</label>
+                            <input type="range" id="bri-slider" min="-100" max="100" value="0">
+                        </div>
+                        <button class="btn" id="btn-reset-adjust">色調整リセット</button>
                     </div>
 
                     <div class="img-switcher" id="img-switcher"></div>
+
                     <div class="img-stage" id="image-stage">
                         <canvas id="image-canvas"></canvas>
                         <canvas id="magnifier-canvas" width="140" height="140"></canvas>
@@ -557,7 +604,7 @@ Code Color Canvas
         let lastHighlightedElement = null;
         let lastSelectedSelectorPath = null;
 
-        // インラインCSS変更の履歴（Undo/Redo）
+        // 色の履歴（セレクタごと／プロパティごと）: Undo/Redo スタック
         const colorHistory = new Map();
         function getHistory(selector) {
             if (!colorHistory.has(selector)) {
@@ -571,20 +618,13 @@ Code Color Canvas
 
         // --- CodeMirror 初期化 ---
         const htmlEditor = CodeMirror.fromTextArea(document.getElementById('html-code'), {
-            mode: 'xml',
-            htmlMode: true,
-            theme: 'material-darker',
-            lineNumbers: true,
+            mode: 'xml', htmlMode: true, theme: 'material-darker', lineNumbers: true,
         });
         const cssEditor = CodeMirror.fromTextArea(document.getElementById('css-code'), {
-            mode: 'css',
-            theme: 'material-darker',
-            lineNumbers: true,
+            mode: 'css', theme: 'material-darker', lineNumbers: true,
         });
         const jsEditor = CodeMirror.fromTextArea(document.getElementById('js-code'), {
-            mode: 'javascript',
-            theme: 'material-darker',
-            lineNumbers: true,
+            mode: 'javascript', theme: 'material-darker', lineNumbers: true,
         });
 
         // --- 初期コード ---
@@ -592,19 +632,18 @@ Code Color Canvas
 Code Color Canvasへようこそ！
 ここにあるテキストやスタイルを自由に編集できます。
 
-クリック `; const initialCSS = `/* ページ全体のスタイル */ html, body { height: 100%; } body { font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans JP", "Hiragino Kaku Gothic ProN", Meiryo, sans-serif; background-color: #f0f0f0; display: flex; justify-content: center; align-items: center; margin: 0; }
-.container { text-align: center; padding: 40px; background-color: white; border-radius: 12px; box-shadow: 0 6px 16px rgba(0,0,0,0.12); }
+クリック `; const initialCSS = `/* ページ全体のスタイル */ html, body { height: 100%; } body { font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans JP", "Hiragino Kaku Gothic ProN", Meiryo, sans-serif; background-color: #f0f0f0; display: flex; justify-content: center; align-items: center; margin: 0; } .container { text-align: center; padding: 40px; background-color: white; border-radius: 12px; box-shadow: 0 6px 16px rgba(0,0,0,0.12); } #main-title { color: #333; margin: 0 0 10px 0; } #action-btn { background-color: #007acc; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-size: 16px; }`; const initialJS = `document.getElementById('action-btn')?.addEventListener('click', () => { alert('ボタンがクリックされました！'); });`;
+        htmlEditor.setValue(initialHTML);
+        cssEditor.setValue(initialCSS);
+        jsEditor.setValue(initialJS);
 
-#main-title { color: #333; margin: 0 0 10px 0; }
-
-#action-btn { background-color: #007acc; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-size: 16px; }; const initialJS = document.getElementById('action-btn')?.addEventListener('click', (e) => { alert('ボタンがクリックされました！'); });`; htmlEditor.setValue(initialHTML); cssEditor.setValue(initialCSS); jsEditor.setValue(initialJS);
-
-        // --- 上位タブ切替 ---
+        // --- 上位タブの切替 ---
         window.showMainTab = function(name) {
             document.querySelectorAll('.top-tab-button').forEach(btn => btn.classList.remove('active'));
             document.querySelectorAll('.tab-page').forEach(p => p.classList.remove('active'));
             document.querySelector(\`.top-tab-button[onclick="showMainTab('\${name}')"]\`).classList.add('active');
             document.getElementById(name === 'code' ? 'code-page' : name === 'preview' ? 'preview-page' : 'image-page').classList.add('active');
+
             if (name === 'code') {
                 htmlEditor.refresh(); cssEditor.refresh(); jsEditor.refresh();
             } else if (name === 'image') {
@@ -612,7 +651,7 @@ Code Color Canvasへようこそ！
             }
         };
 
-        // --- サブタブ切替 ---
+        // --- サブタブ（HTML/CSS/JS） ---
         window.showEditor = function(editorName) {
             document.querySelectorAll('.editor-wrapper').forEach(w => w.classList.remove('active'));
             document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
@@ -627,10 +666,10 @@ Code Color Canvasへようこそ！
         function updatePreview() {
             const iframe = document.getElementById('preview-frame');
             const doc = iframe.contentDocument || iframe.contentWindow.document;
+
             const htmlCode = htmlEditor.getValue();
             const cssCode = cssEditor.getValue();
             const jsCode = jsEditor.getValue();
 
             doc.open();
             doc.write(`<!DOCTYPE html>
-
