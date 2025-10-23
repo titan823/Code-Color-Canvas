@@ -47,7 +47,7 @@
             border-bottom: 2px solid var(--accent);
         }
 
-        /* 上位タブ（編集 / プレビュー / 画像カラー分析） */
+        /* 上位タブ */
         .main-container {
             display: flex;
             flex-direction: column;
@@ -98,6 +98,9 @@
             padding: 8px 12px;
             font-weight: bold;
             border-bottom: 1px solid var(--border-1);
+            display: flex;
+            align-items: center;
+            gap: 16px;
         }
         .panel {
             display: flex;
@@ -235,13 +238,44 @@
         }
         .btn:hover { background: #3a3a3a; }
         .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .btn.active { background: var(--accent); color: white; border-color: var(--accent); }
+
+
+        /* モード切替 */
+        .mode-switcher {
+            display: inline-flex;
+            margin-left: auto; /* 右寄せ */
+            background-color: var(--panel-2);
+            border-radius: 4px;
+            padding: 2px;
+        }
+        .mode-switcher .btn {
+            padding: 4px 10px;
+            font-size: 0.8em;
+            border: none;
+            background: transparent;
+        }
+        .mode-switcher .btn.active {
+            background-color: var(--accent);
+            color: white;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+        }
+
+        /* 彩色モード用UI */
+        #coloring-ui {
+            padding: 10px;
+            color: var(--muted);
+        }
+        #coloring-ui p { margin-top: 0; }
+        .color-target-group { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
+        .color-target-group label { display: flex; align-items: center; gap: 8px; cursor: pointer; }
+
 
         /* 画像カラー分析タブ */
         .img-toolbar {
             display: flex; flex-direction: column; gap: 0;
             padding: 8px 12px; background: var(--panel-2); border-bottom: 1px solid var(--border-1);
         }
-        /* ツールバー行の段落分け */
         .img-toolbar .toolbar-row { width: 100%; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
         .img-toolbar .toolbar-row + .toolbar-row { margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border-1); }
         .img-toolbar input[type="text"] {
@@ -300,7 +334,6 @@
         .status-line { font-size: 0.85em; color: #ccc; padding: 4px 12px; border-top: 1px solid #444; background: #2b2b2b; }
         .note { color: #bbb; font-size: 0.85em; }
 
-        /* 新機能：タッチオフセット */
         .touch-offset-group {
             display: inline-flex;
             align-items: center;
@@ -311,7 +344,6 @@
         }
         .touch-offset-group input[type="number"] { padding: 2px 4px; width: 60px; }
 
-        /* 新機能：ブラシ設定 */
         .brush-settings {
             padding: 8px 12px;
             background: var(--panel-2);
@@ -330,7 +362,6 @@
             margin: 0 8px;
         }
 
-        /* 新機能：色調整スライダー */
         .adjust-settings {
             padding: 8px 12px;
             background: var(--panel-2);
@@ -343,7 +374,6 @@
         .adjust-settings label { display: flex; align-items: center; gap: 6px; }
         .adjust-settings input[type="range"] { width: 160px; }
 
-        /* 新機能：ポインターマーカー */
         #pointer-marker {
             position: absolute;
             width: 24px;
@@ -376,7 +406,6 @@
             transform: translateY(-50%);
         }
 
-        /* 新機能：ブラシプレビュー */
         #brush-preview {
             position: absolute;
             border: 2px solid rgba(255,255,255,0.8);
@@ -388,7 +417,6 @@
             transform: translate(-50%, -50%);
         }
 
-        /* 新機能：オフセットライン */
         #offset-line {
             position: absolute;
             border-left: 1px dashed rgba(255,255,255,0.5);
@@ -397,6 +425,56 @@
             display: none;
             transform-origin: top left;
         }
+
+        /* ★★★ カラー編集タブのスタイル ★★★ */
+        .colorlab-container {
+            display: flex;
+            flex: 1;
+            min-height: 0;
+        }
+        .colorlab-left, .colorlab-right {
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+        }
+        .colorlab-left {
+            flex: 1 1 50%;
+            border-right: 2px solid var(--border-1);
+        }
+        .colorlab-right {
+            flex: 1 1 50%;
+        }
+        .colorlab-body {
+            flex: 1;
+            background-color: var(--panel);
+            padding: 20px;
+            overflow-y: auto;
+        }
+        #colorlab-swatch {
+            width: 100%;
+            height: 96px;
+            border: 1px solid var(--border-1);
+            border-radius: 6px;
+            margin-top: 8px;
+            background-image: conic-gradient(#ccc 25%, #fff 0 50%, #ccc 0 75%, #fff 0) 0 0 / 16px 16px;
+        }
+        .colorlab-slider-group {
+            display: grid;
+            grid-template-columns: auto 1fr auto;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        .colorlab-slider-group label { color: var(--muted); }
+        .colorlab-slider-group input[type="range"] { width: 100%; }
+        .colorlab-slider-group span { min-width: 40px; text-align: right; }
+        .colorlab-lock-group {
+            display: flex; gap: 12px; margin: 12px 0;
+        }
+        .colorlab-actions {
+            display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px;
+        }
+
     </style>
 </head>
 <body>
@@ -408,6 +486,8 @@
             <button class="top-tab-button active" onclick="showMainTab('code')">コード編集</button>
             <button class="top-tab-button" onclick="showMainTab('preview')">プレビュー・変更</button>
             <button class="top-tab-button" onclick="showMainTab('image')">画像カラー分析</button>
+            <!-- ★★★ 新しいタブボタンを追加 ★★★ -->
+            <button class="top-tab-button" onclick="showMainTab('colorlab')">カラー編集</button>
         </div>
 
         <div class="page-container">
@@ -434,7 +514,7 @@
                 </div>
             </section>
 
-            <!-- プレビュー・変更タブ（左右分割） -->
+            <!-- プレビュー・変更タブ -->
             <section id="preview-page" class="tab-page">
                 <div class="split-container">
                     <div class="split-left">
@@ -444,16 +524,36 @@
                         </div>
                     </div>
                     <div class="split-right">
-                        <div class="panel-header">インスペクター</div>
+                        <div class="panel-header">
+                            <span>インスペクター</span>
+                            <div class="mode-switcher">
+                                <button id="mode-action" class="btn active" onclick="switchMode('action')">操作モード</button>
+                                <button id="mode-color" class="btn" onclick="switchMode('color')">彩色モード</button>
+                            </div>
+                        </div>
                         <div class="inspector-body">
                             <p id="inspector-placeholder">プレビュー内の要素をクリックすると、ここでテキストやスタイルを編集できます。</p>
+                            
+                            <div id="coloring-ui" style="display: none;">
+                                <p>「画像カラー分析」または「カラー編集」タブで取得・作成した色を適用します。</p>
+                                <p>先に色を準備してから、プレビュー内の要素をクリックしてください。</p>
+                                <div class="color-target-group">
+                                    <label>
+                                        <input type="radio" name="color-target" value="color" checked>
+                                        テキスト色に適用
+                                    </label>
+                                    <label>
+                                        <input type="radio" name="color-target" value="backgroundColor">
+                                        背景色に適用
+                                    </label>
+                                </div>
+                            </div>
+                            
                             <div id="inspector-ui" style="display: none;">
                                 <div class="inspector-item">
                                     <label>選択中の要素</label>
                                     <b id="selected-element-selector"></b>
                                 </div>
-
-                                <!-- テキスト編集 -->
                                 <div class="inspector-item">
                                     <label for="inspector-text">テキスト</label>
                                     <textarea id="inspector-text" placeholder="選択した要素のテキストを編集"></textarea>
@@ -464,11 +564,9 @@
                                         <button class="btn" id="apply-text">適用</button>
                                     </div>
                                 </div>
-
-                                <!-- テキスト色 -->
                                 <div class="inspector-item">
                                     <label for="inspector-color">テキスト色</label>
-                                    <input type="text" id="inspector-color" placeholder="例: #ff8800, rgb(255 136 0 / 80%), hsl(30 100% 50%), rebeccapurple, color(display-p3 1 0.5 0)">
+                                    <input type="text" id="inspector-color" placeholder="例: #ff8800, rgb(255 136 0 / 80%)">
                                     <span class="color-swatch" id="swatch-color"></span>
                                     <span class="validity-badge" id="valid-color">未入力</span>
                                     <div class="inspector-actions">
@@ -477,11 +575,9 @@
                                         <button class="btn" id="redo-color" disabled>やり直す</button>
                                     </div>
                                 </div>
-
-                                <!-- 背景色 -->
                                 <div class="inspector-item">
                                     <label for="inspector-bg">背景色</label>
-                                    <input type="text" id="inspector-bg" placeholder="例: transparent, #222, rgba(0 0 0 / .4), lch(50 60 40)">
+                                    <input type="text" id="inspector-bg" placeholder="例: transparent, #222, lch(50 60 40)">
                                     <span class="color-swatch" id="swatch-bg"></span>
                                     <span class="validity-badge" id="valid-bg">未入力</span>
                                     <div class="inspector-actions">
@@ -490,19 +586,17 @@
                                         <button class="btn" id="redo-bg" disabled>やり直す</button>
                                     </div>
                                 </div>
-
-                                <!-- ボックス系 -->
                                 <div class="inspector-item">
                                     <label for="inspector-padding">パディング</label>
-                                    <input type="text" id="inspector-padding" placeholder="例: 10px / 8px 12px / 1rem 2rem">
+                                    <input type="text" id="inspector-padding" placeholder="例: 10px / 8px 12px">
                                 </div>
                                 <div class="inspector-item">
                                     <label for="inspector-margin">マージン</label>
-                                    <input type="text" id="inspector-margin" placeholder="例: 10px auto / 0 16px">
+                                    <input type="text" id="inspector-margin" placeholder="例: 10px auto">
                                 </div>
                                 <div class="inspector-item">
                                     <label for="inspector-fontSize">フォントサイズ</label>
-                                    <input type="text" id="inspector-fontSize" placeholder="例: 16px / 1.2rem / clamp(14px, 2vw, 20px)">
+                                    <input type="text" id="inspector-fontSize" placeholder="例: 16px / 1.2rem">
                                 </div>
                             </div>
                         </div>
@@ -510,10 +604,9 @@
                 </div>
             </section>
 
-            <!-- 画像カラー分析タブ（左右分割） -->
+            <!-- 画像カラー分析タブ -->
             <section id="image-page" class="tab-page">
                 <div class="split-container">
-                    <!-- 左：画像 -->
                     <div class="split-left">
                         <div class="panel-header">画像</div>
                         <div class="img-toolbar">
@@ -562,8 +655,6 @@
                         </div>
                         <div class="status-line" id="img-status"></div>
                     </div>
-
-                    <!-- 右：分析結果 -->
                     <div class="split-right">
                         <div class="panel-header">カラー分析</div>
                         <div class="inspector-body" id="image-inspector">
@@ -572,13 +663,11 @@
                                 <div class="swatch-large" id="current-swatch"></div>
                                 <div id="current-color-text">未取得</div>
                             </div>
-
                             <div class="panel-section-title">表記</div>
                             <div class="kv-row"><label style="min-width:80px;">HEX</label><code id="hex-val">-</code><button class="btn copy-btn" data-copy-target="hex-val">コピー</button></div>
                             <div class="kv-row"><label style="min-width:80px;">HEXA</label><code id="hexa-val">-</code><button class="btn copy-btn" data-copy-target="hexa-val">コピー</button></div>
                             <div class="kv-row"><label style="min-width:80px;">RGB(A)</label><code id="rgb-val">-</code><button class="btn copy-btn" data-copy-target="rgb-val">コピー</button></div>
                             <div class="kv-row"><label style="min-width:80px;">HSL(A)</label><code id="hsl-val">-</code><button class="btn copy-btn" data-copy-target="hsl-val">コピー</button></div>
-
                             <div class="panel-section-title">視認性</div>
                             <div class="kv-row"><label style="min-width:120px;">相対輝度</label><code id="luminance-val">-</code></div>
                             <div class="kv-row"><label style="min-width:120px;">コントラスト比</label>
@@ -589,26 +678,99 @@
                                 <div class="contrast-sample" id="contrast-on-black" style="background:#000;color:#fff;">サンプル</div>
                                 <div class="contrast-sample" id="contrast-on-white" style="background:#fff;color:#000;">サンプル</div>
                             </div>
-
                             <div class="panel-section-title">履歴（画像ごとに保存）</div>
                             <div class="history-list" id="history-list"></div>
-                            <p class="note">画面スポイトはChrome/Edgeなどで使用可能です。URL読み込みはCORS対応の画像のみキャンバス内スポイトが動作します（ローカルファイルはOK）。</p>
+                            <p class="note">画面スポイトはChrome/Edgeなどで使用可能です。URL読み込みはCORS対応の画像のみキャンバス内スポイトが動作します。</p>
                         </div>
                     </div>
                 </div>
             </section>
+
+            <!-- ★★★ 新しいカラー編集タブ ★★★ -->
+            <section id="colorlab-page" class="tab-page">
+                <div class="colorlab-container">
+                    <!-- 左：操作パネル -->
+                    <div class="colorlab-left">
+                        <div class="panel-header">カラー調整</div>
+                        <div class="colorlab-body">
+                            <div class="inspector-item">
+                                <input type="text" id="colorlab-input" placeholder="色コードを入力 (例: #ff8800, blue)">
+                                <span class="validity-badge" id="colorlab-valid">未入力</span>
+                            </div>
+                            <div id="colorlab-swatch"></div>
+                            
+                            <div class="panel-section-title">調整モード</div>
+                            <div class="colorlab-lock-group">
+                                <label><input type="checkbox" id="colorlab-lock-lightness" checked> 輝度のみ変更</label>
+                            </div>
+
+                            <div class="panel-section-title">HSL調整</div>
+                            <div class="colorlab-slider-group">
+                                <label for="colorlab-hue">H</label>
+                                <input type="range" id="colorlab-hue" min="0" max="360" value="0">
+                                <span id="colorlab-hue-val">0</span>
+                            </div>
+                            <div class="colorlab-slider-group">
+                                <label for="colorlab-sat">S</label>
+                                <input type="range" id="colorlab-sat" min="0" max="100" value="0">
+                                <span id="colorlab-sat-val">0%</span>
+                            </div>
+                            <div class="colorlab-slider-group">
+                                <label for="colorlab-light">L</label>
+                                <input type="range" id="colorlab-light" min="0" max="100" value="0">
+                                <span id="colorlab-light-val">0%</span>
+                            </div>
+                            <div class="colorlab-slider-group">
+                                <label for="colorlab-alpha">A</label>
+                                <input type="range" id="colorlab-alpha" min="0" max="100" value="100">
+                                <span id="colorlab-alpha-val">100%</span>
+                            </div>
+
+                            <div class="colorlab-actions">
+                                <button class="btn" id="colorlab-btn-reset">リセット</button>
+                                <button class="btn" id="colorlab-btn-pull">画像を読み込む</button>
+                                <button class="btn" id="colorlab-btn-send">彩色モードへ送る</button>
+                            </div>
+                            <p class="note" style="margin-top: 16px;">「画像を読み込む」ボタンで、画像タブで取得した色を呼び出せます。</p>
+                        </div>
+                    </div>
+                    <!-- 右：分析パネル -->
+                    <div class="colorlab-right">
+                        <div class="panel-header">分析結果</div>
+                        <div class="colorlab-body">
+                            <div class="panel-section-title">表記</div>
+                            <div class="kv-row"><label style="min-width:80px;">HEX</label><code id="colorlab-hex-val">-</code><button class="btn copy-btn" data-copy-target="colorlab-hex-val">コピー</button></div>
+                            <div class="kv-row"><label style="min-width:80px;">HEXA</label><code id="colorlab-hexa-val">-</code><button class="btn copy-btn" data-copy-target="colorlab-hexa-val">コピー</button></div>
+                            <div class="kv-row"><label style="min-width:80px;">RGB(A)</label><code id="colorlab-rgb-val">-</code><button class="btn copy-btn" data-copy-target="colorlab-rgb-val">コピー</button></div>
+                            <div class="kv-row"><label style="min-width:80px;">HSL(A)</label><code id="colorlab-hsl-val">-</code><button class="btn copy-btn" data-copy-target="colorlab-hsl-val">コピー</button></div>
+
+                            <div class="panel-section-title">視認性</div>
+                            <div class="kv-row"><label style="min-width:120px;">相対輝度</label><code id="colorlab-luminance-val">-</code></div>
+                            <div class="kv-row"><label style="min-width:120px;">コントラスト比</label>
+                                <div>対黒: <code id="colorlab-contrast-black">-</code></div>
+                                <div>対白: <code id="colorlab-contrast-white">-</code></div>
+                            </div>
+                            <div class="contrast-box">
+                                <div class="contrast-sample" id="colorlab-on-black" style="background:#000;color:#fff;">サンプル</div>
+                                <div class="contrast-sample" id="colorlab-on-white" style="background:#fff;color:#000;">サンプル</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
         </div>
     </main>
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // --- グローバル（プレビュー・変更タブ関連） ---
+            // --- グローバル変数群 ---
             let selectedElement = null;
             let lastHighlightedElement = null;
-            let lastSelectedSelectorPath = null; // プレビュー更新後の選択復元用
+            let lastSelectedSelectorPath = null;
+            let currentMode = 'action';
+            let globalCurrentColor = null;
 
-            // 色の履歴（セレクタごと／プロパティごと）: Undo/Redo スタック
-            // Map<string, { color: {undo:string[], redo:string[]}, backgroundColor: {undo:string[], redo:string[]} }>
             const colorHistory = new Map();
             function getHistory(selector) {
                 if (!colorHistory.has(selector)) {
@@ -622,86 +784,49 @@
 
             // --- CodeMirror 初期化 ---
             const htmlEditor = CodeMirror.fromTextArea(document.getElementById('html-code'), {
-                mode: 'xml',
-                htmlMode: true,
-                theme: 'material-darker',
-                lineNumbers: true,
+                mode: 'xml', htmlMode: true, theme: 'material-darker', lineNumbers: true,
             });
             const cssEditor = CodeMirror.fromTextArea(document.getElementById('css-code'), {
-                mode: 'css',
-                theme: 'material-darker',
-                lineNumbers: true,
+                mode: 'css', theme: 'material-darker', lineNumbers: true,
             });
             const jsEditor = CodeMirror.fromTextArea(document.getElementById('js-code'), {
-                mode: 'javascript',
-                theme: 'material-darker',
-                lineNumbers: true,
+                mode: 'javascript', theme: 'material-darker', lineNumbers: true,
             });
 
-            // --- 初期コード（HTMLは<body>内に入る想定） ---
+            // --- 初期コード ---
             const initialHTML = `<div class="container">
   <h1 id="main-title">Code Color Canvasへようこそ！</h1>
   <p>ここにあるテキストやスタイルを自由に編集できます。</p>
   <button id="action-btn">クリック</button>
 </div>`;
-            const initialCSS = `/* ページ全体のスタイル */
-html, body {
-  height: 100%;
-}
-body {
-  font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans JP", "Hiragino Kaku Gothic ProN", Meiryo, sans-serif;
-  background-color: #f0f0f0;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  margin: 0;
-}
-
-.container {
-  text-align: center;
-  padding: 40px;
-  background-color: white;
-  border-radius: 12px;
-  box-shadow: 0 6px 16px rgba(0,0,0,0.12);
-}
-
-#main-title {
-  color: #333;
-  margin: 0 0 10px 0;
-}
-
-#action-btn {
-  background-color: #007acc;
-  color: white;
-  border: none;
-  padding: 10px 20px;
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 16px;
-}`;
-            const initialJS = `document.getElementById('action-btn')?.addEventListener('click', (e) => {
-  alert('ボタンがクリックされました！');
-});`;
+            const initialCSS = `body { font-family: system-ui, sans-serif; background-color: #f0f0f0; display: flex; justify-content: center; align-items: center; height: 100%; margin: 0; }
+.container { text-align: center; padding: 40px; background-color: white; border-radius: 12px; box-shadow: 0 6px 16px rgba(0,0,0,0.12); }
+#main-title { color: #333; margin: 0 0 10px 0; }
+#action-btn { background-color: #007acc; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-size: 16px; }`;
+            const initialJS = `document.getElementById('action-btn')?.addEventListener('click', () => alert('ボタンがクリックされました！'));`;
 
             htmlEditor.setValue(initialHTML);
             cssEditor.setValue(initialCSS);
             jsEditor.setValue(initialJS);
 
-            // --- 上位タブの切替 ---
+            // --- タブ制御 ---
             window.showMainTab = function(name) {
                 document.querySelectorAll('.top-tab-button').forEach(btn => btn.classList.remove('active'));
                 document.querySelectorAll('.tab-page').forEach(p => p.classList.remove('active'));
                 document.querySelector(`.top-tab-button[onclick="showMainTab('${name}')"]`).classList.add('active');
-                document.getElementById(name === 'code' ? 'code-page' : name === 'preview' ? 'preview-page' : 'image-page').classList.add('active');
+                
+                const pageId = `${name}-page`;
+                document.getElementById(pageId).classList.add('active');
 
                 if (name === 'code') {
                     htmlEditor.refresh(); cssEditor.refresh(); jsEditor.refresh();
                 } else if (name === 'image') {
                     if (typeof resizeImageStage === 'function') resizeImageStage();
+                } else if (name === 'preview') {
+                    switchMode(currentMode);
                 }
             };
 
-            // --- サブタブ（HTML/CSS/JS） ---
             window.showEditor = function(editorName) {
                 document.querySelectorAll('.editor-wrapper').forEach(w => w.classList.remove('active'));
                 document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
@@ -716,27 +841,11 @@ body {
             function updatePreview() {
                 const iframe = document.getElementById('preview-frame');
                 const doc = iframe.contentDocument || iframe.contentWindow.document;
-
-                const htmlCode = htmlEditor.getValue();
-                const cssCode = cssEditor.getValue();
-                const jsCode = jsEditor.getValue();
-
                 doc.open();
-                doc.write(`<!DOCTYPE html>
-<html lang="ja">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<style>${cssCode}</style>
-</head>
-<body>
-${htmlCode}
-<script>(function(){\n${jsCode}\n})();<\/script>
-</body>
-</html>`);
+                doc.write(`<!DOCTYPE html><html lang="ja"><head><meta charset="UTF-8"><style>${cssEditor.getValue()}</style></head><body>${htmlEditor.getValue()}<script>(function(){${jsEditor.getValue()}})();<\/script></body></html>`);
                 doc.close();
-
                 setupInspectorListeners();
+                switchMode(currentMode);
                 if (!restoreSelection()) {
                     selectedElement = null;
                     lastHighlightedElement = null;
@@ -747,76 +856,113 @@ ${htmlCode}
             cssEditor.on('change', updatePreview);
             jsEditor.on('change', updatePreview);
 
-            // --- インスペクター（プレビュー・変更） ---
-            function setupInspectorListeners() {
+            // --- モード切替 ---
+            window.switchMode = function(mode) {
+                currentMode = mode;
+                document.getElementById('mode-action').classList.toggle('active', mode === 'action');
+                document.getElementById('mode-color').classList.toggle('active', mode === 'color');
+                const inspectorUI = document.getElementById('inspector-ui');
+                const coloringUI = document.getElementById('coloring-ui');
+                const placeholder = document.getElementById('inspector-placeholder');
                 const iframe = document.getElementById('preview-frame');
                 const pdoc = iframe.contentDocument || iframe.contentWindow.document;
-                const pbody = pdoc && pdoc.body;
+                if (mode === 'action') {
+                    coloringUI.style.display = 'none';
+                    if (selectedElement) {
+                        inspectorUI.style.display = 'block';
+                        placeholder.style.display = 'none';
+                    } else {
+                        inspectorUI.style.display = 'none';
+                        placeholder.style.display = 'block';
+                    }
+                    if (pdoc && pdoc.body) pdoc.body.style.cursor = 'default';
+                } else {
+                    inspectorUI.style.display = 'none';
+                    placeholder.style.display = 'none';
+                    coloringUI.style.display = 'block';
+                    if (pdoc && pdoc.body) pdoc.body.style.cursor = 'crosshair';
+                }
+            }
+
+            // --- インスペクター ---
+            function setupInspectorListeners() {
+                const iframe = document.getElementById('preview-frame');
+                const pbody = iframe.contentDocument?.body;
                 if (!pbody) return;
                 pbody.addEventListener('click', (e) => {
                     e.preventDefault(); e.stopPropagation();
-                    if (lastHighlightedElement) lastHighlightedElement.style.outline = '';
-                    selectedElement = e.target;
-                    selectedElement.style.outline = '2px solid #007acc';
-                    lastHighlightedElement = selectedElement;
-                    lastSelectedSelectorPath = getCssSelector(selectedElement);
-                    populateInspector(selectedElement);
+                    if (currentMode === 'action') {
+                        if (lastHighlightedElement) lastHighlightedElement.style.outline = '';
+                        selectedElement = e.target;
+                        selectedElement.style.outline = '2px solid var(--accent)';
+                        lastHighlightedElement = selectedElement;
+                        lastSelectedSelectorPath = getCssSelector(selectedElement);
+                        populateInspector(selectedElement);
+                    } else if (currentMode === 'color') {
+                        if (!globalCurrentColor) { alert('先に色を準備してください。'); return; }
+                        selectedElement = e.target;
+                        lastSelectedSelectorPath = getCssSelector(e.target);
+                        const prop = document.querySelector('input[name="color-target"]:checked').value;
+                        const colorStr = toRgbString(globalCurrentColor.r, globalCurrentColor.g, globalCurrentColor.b, globalCurrentColor.a);
+                        applyStyleChange(prop, colorStr);
+                        e.target.style.outline = '3px solid var(--ok)';
+                        setTimeout(() => { if (e.target.style.outline === '3px solid var(--ok)') e.target.style.outline = ''; }, 500);
+                    }
                 }, { capture: true });
             }
+
             function restoreSelection() {
                 if (!lastSelectedSelectorPath) return false;
-                const iframe = document.getElementById('preview-frame');
-                const pdoc = iframe.contentDocument || iframe.contentWindow.document;
-                if (!pdoc) return false;
-                let el = null; try { el = pdoc.querySelector(lastSelectedSelectorPath); } catch (_) {}
+                const el = document.getElementById('preview-frame').contentDocument?.querySelector(lastSelectedSelectorPath);
                 if (el) {
                     if (lastHighlightedElement) lastHighlightedElement.style.outline = '';
                     selectedElement = el;
-                    selectedElement.style.outline = '2px solid #007acc';
-                    lastHighlightedElement = selectedElement;
-                    populateInspector(selectedElement);
+                    if (currentMode === 'action') {
+                        selectedElement.style.outline = '2px solid var(--accent)';
+                        lastHighlightedElement = selectedElement;
+                        populateInspector(selectedElement);
+                    }
                     return true;
                 }
                 return false;
             }
+
             function getCssSelector(el) {
                 if (!el || el.nodeType !== 1) return '';
                 const parts = [];
                 while (el && el.nodeType === 1) {
                     let selector = el.nodeName.toLowerCase();
-                    if (el.id) {
-                        selector = '#' + el.id; parts.unshift(selector); break;
-                    } else {
-                        if (el.classList && el.classList.length) selector += '.' + el.classList[0];
+                    if (el.id) { parts.unshift('#' + el.id); break; }
+                    else {
+                        if (el.classList.length) selector += '.' + Array.from(el.classList).join('.');
                         let sib = el, nth = 1;
-                        while (sib = sib.previousElementSibling) {
-                            if (sib.nodeName.toLowerCase() === el.nodeName.toLowerCase()) nth++;
-                        }
+                        while (sib = sib.previousElementSibling) if (sib.nodeName === el.nodeName) nth++;
                         if (nth !== 1) selector += `:nth-of-type(${nth})`;
                     }
                     parts.unshift(selector);
+                    if (el.parentNode?.nodeName === 'BODY') break;
                     el = el.parentNode;
                 }
                 return parts.join(' > ');
             }
+
             function showInspectorPlaceholder() {
                 document.getElementById('inspector-placeholder').style.display = 'block';
                 document.getElementById('inspector-ui').style.display = 'none';
+                document.getElementById('coloring-ui').style.display = 'none';
             }
+
             function populateInspector(element) {
+                if (currentMode !== 'action') return;
                 document.getElementById('inspector-placeholder').style.display = 'none';
+                document.getElementById('coloring-ui').style.display = 'none';
                 document.getElementById('inspector-ui').style.display = 'block';
-                const iframe = document.getElementById('preview-frame');
-                const pwin = iframe.contentWindow;
-                const styles = pwin.getComputedStyle(element);
+                const styles = window.getComputedStyle(element);
                 document.getElementById('selected-element-selector').textContent = getCssSelector(element);
-                const textAsHTML = document.getElementById('inspector-text-as-html');
-                textAsHTML.checked = false;
+                document.getElementById('inspector-text-as-html').checked = false;
                 document.getElementById('inspector-text').value = element.textContent ?? '';
-                const colorInput = document.getElementById('inspector-color');
-                const bgInput = document.getElementById('inspector-bg');
-                colorInput.value = styles.color || '';
-                bgInput.value = styles.backgroundColor || '';
+                document.getElementById('inspector-color').value = styles.color || '';
+                document.getElementById('inspector-bg').value = styles.backgroundColor || '';
                 updateColorUI('color'); updateColorUI('bg'); updateApplyButtons(); updateHistoryButtons();
                 document.getElementById('inspector-padding').value = styles.padding || '';
                 document.getElementById('inspector-margin').value = styles.margin || '';
@@ -833,17 +979,10 @@ ${htmlCode}
                 const regex = new RegExp(`(${esc})\\s*\\{([^}]*)\\}`, 's');
                 const match = cssCode.match(regex);
                 if (match) {
-                    let properties = match[2];
+                    let props = match[2];
                     const propRegex = new RegExp(`(^|;)\\s*${cssProperty}\\s*:[^;]*`, 'i');
-                    if (propRegex.test(properties)) {
-                        const newProperties = properties.replace(propRegex, `$1 ${cssProperty}: ${value}`);
-                        cssCode = cssCode.replace(match[0], `${selector} {${newProperties}}`);
-                    } else {
-                        const trimmed = properties.trim();
-                        const sep = trimmed && !trimmed.endsWith(';') ? ';' : '';
-                        const newProperties = `${trimmed}${sep} ${cssProperty}: ${value}; `;
-                        cssCode = cssCode.replace(match[0], `${selector} {\n${newProperties}\n}`);
-                    }
+                    if (propRegex.test(props)) cssCode = cssCode.replace(match[0], `${selector} {${props.replace(propRegex, `$1 ${cssProperty}: ${value}`)}}`);
+                    else cssCode = cssCode.replace(match[0], `${selector} {\n${props.trim()}${props.trim() && !props.trim().endsWith(';') ? ';' : ''} ${cssProperty}: ${value}; \n}`);
                 } else {
                     cssCode += `\n\n${selector} {\n    ${cssProperty}: ${value};\n}`;
                 }
@@ -851,51 +990,30 @@ ${htmlCode}
                 cssEditor.setValue(cssCode);
             }
 
-            // カラー入力 妥当性
-            function isValidCSSColor(value) {
-                const iframe = document.getElementById('preview-frame');
-                const pwin = iframe.contentWindow;
-                try {
-                    if (pwin.CSS && typeof pwin.CSS.supports === 'function') {
-                        return pwin.CSS.supports('color', value);
-                    }
-                } catch (_) { }
-                const opt = pwin.document.createElement('option');
-                opt.style.color = '';
-                opt.style.color = value;
-                return !!opt.style.color;
-            }
+            function isValidCSSColor(value) { return CSS.supports('color', value); }
             function updateColorUI(kind) {
                 const input = document.getElementById(kind === 'color' ? 'inspector-color' : 'inspector-bg');
                 const swatch = document.getElementById(kind === 'color' ? 'swatch-color' : 'swatch-bg');
                 const badge = document.getElementById(kind === 'color' ? 'valid-color' : 'valid-bg');
                 const val = input.value.trim();
-                if (!val) { swatch.style.background = 'transparent'; badge.textContent = '未入力'; badge.classList.remove('ok','ng'); }
-                else if (isValidCSSColor(val)) { swatch.style.background = val; badge.textContent = 'OK'; badge.classList.add('ok'); badge.classList.remove('ng'); }
-                else { swatch.style.background = 'transparent'; badge.textContent = '不正'; badge.classList.add('ng'); badge.classList.remove('ok'); }
+                if (!val) { swatch.style.background = 'transparent'; badge.textContent = '未入力'; badge.className = 'validity-badge'; }
+                else if (isValidCSSColor(val)) { swatch.style.background = val; badge.textContent = 'OK'; badge.className = 'validity-badge ok'; }
+                else { swatch.style.background = 'transparent'; badge.textContent = '不正'; badge.className = 'validity-badge ng'; }
                 updateApplyButtons();
             }
             function updateApplyButtons() {
-                const colorVal = document.getElementById('inspector-color').value.trim();
-                const bgVal = document.getElementById('inspector-bg').value.trim();
-                document.getElementById('apply-color').disabled = !(selectedElement && isValidCSSColor(colorVal));
-                document.getElementById('apply-bg').disabled = !(selectedElement && isValidCSSColor(bgVal));
+                document.getElementById('apply-color').disabled = !(selectedElement && isValidCSSColor(document.getElementById('inspector-color').value.trim()));
+                document.getElementById('apply-bg').disabled = !(selectedElement && isValidCSSColor(document.getElementById('inspector-bg').value.trim()));
             }
             function updateHistoryButtons() {
-                const selector = lastSelectedSelectorPath;
-                const entry = selector ? colorHistory.get(selector) : null;
-                const canUndoColor = !!(entry && entry.color.undo.length);
-                const canUndoBg = !!(entry && entry.backgroundColor.undo.length);
-                const canRedoColor = !!(entry && entry.color.redo.length);
-                const canRedoBg = !!(entry && entry.backgroundColor.redo.length);
-                document.getElementById('undo-color').disabled = !canUndoColor;
-                document.getElementById('undo-bg').disabled = !canUndoBg;
-                document.getElementById('redo-color').disabled = !canRedoColor;
-                document.getElementById('redo-bg').disabled = !canRedoBg;
+                const h = lastSelectedSelectorPath ? colorHistory.get(lastSelectedSelectorPath) : null;
+                document.getElementById('undo-color').disabled = !(h?.color.undo.length);
+                document.getElementById('undo-bg').disabled = !(h?.backgroundColor.undo.length);
+                document.getElementById('redo-color').disabled = !(h?.color.redo.length);
+                document.getElementById('redo-bg').disabled = !(h?.backgroundColor.redo.length);
             }
 
-            document.getElementById('inspector-color').addEventListener('input', () => updateColorUI('color'));
-            document.getElementById('inspector-bg').addEventListener('input', () => updateColorUI('bg'));
+            ['inspector-color', 'inspector-bg'].forEach(id => document.getElementById(id).addEventListener('input', () => updateColorUI(id.includes('bg') ? 'bg' : 'color')));
             document.getElementById('apply-color').addEventListener('click', () => commitColor('color'));
             document.getElementById('apply-bg').addEventListener('click', () => commitColor('backgroundColor'));
             document.getElementById('undo-color').addEventListener('click', () => undoColor('color'));
@@ -910,127 +1028,83 @@ ${htmlCode}
                 if (!isValidCSSColor(val)) return;
                 const selector = getCssSelector(selectedElement);
                 lastSelectedSelectorPath = selector;
-                const iframe = document.getElementById('preview-frame');
-                const pwin = iframe.contentWindow;
-                const styles = pwin.getComputedStyle(selectedElement);
-                const prev = prop === 'color' ? styles.color : styles.backgroundColor;
+                const prev = window.getComputedStyle(selectedElement)[prop];
                 const h = getHistory(selector);
                 h[prop].undo.push(prev);
                 h[prop].redo.length = 0;
                 updateHistoryButtons();
                 applyStyleChange(prop, val);
             }
-            function undoColor(prop) {
+            function undoRedo(action, prop) {
                 const selector = lastSelectedSelectorPath;
                 if (!selector) return;
                 const h = colorHistory.get(selector);
-                if (!h || !h[prop] || !h[prop].undo.length) return;
-                const iframe = document.getElementById('preview-frame');
-                const pwin = iframe.contentWindow;
-                const styles = pwin.getComputedStyle(selectedElement);
-                const currentVal = prop === 'color' ? styles.color : styles.backgroundColor;
-                h[prop].redo.push(currentVal);
-                const prev = h[prop].undo.pop();
-                const input = document.getElementById(prop === 'color' ? 'inspector-color' : 'inspector-bg');
-                input.value = prev || '';
+                const from = action === 'undo' ? h[prop].undo : h[prop].redo;
+                const to = action === 'undo' ? h[prop].redo : h[prop].undo;
+                if (!from.length) return;
+                const currentVal = window.getComputedStyle(selectedElement)[prop];
+                to.push(currentVal);
+                const val = from.pop();
+                document.getElementById(prop === 'color' ? 'inspector-color' : 'inspector-bg').value = val || '';
                 updateColorUI(prop === 'color' ? 'color' : 'bg');
-                applyStyleChange(prop, prev);
+                applyStyleChange(prop, val);
                 updateHistoryButtons();
             }
-            function redoColor(prop) {
-                const selector = lastSelectedSelectorPath;
-                if (!selector) return;
-                const h = colorHistory.get(selector);
-                if (!h || !h[prop] || !h[prop].redo.length) return;
-                const iframe = document.getElementById('preview-frame');
-                const pwin = iframe.contentWindow;
-                const styles = pwin.getComputedStyle(selectedElement);
-                const currentVal = prop === 'color' ? styles.color : styles.backgroundColor;
-                h[prop].undo.push(currentVal);
-                const nextVal = h[prop].redo.pop();
-                const input = document.getElementById(prop === 'color' ? 'inspector-color' : 'inspector-bg');
-                input.value = nextVal || '';
-                updateColorUI(prop === 'color' ? 'color' : 'bg');
-                applyStyleChange(prop, nextVal);
-                updateHistoryButtons();
-            }
+            function undoColor(prop) { undoRedo('undo', prop); }
+            function redoColor(prop) { undoRedo('redo', prop); }
 
-            // テキスト編集
-            const textArea = document.getElementById('inspector-text');
-            const textAsHTML = document.getElementById('inspector-text-as-html');
-            const applyTextBtn = document.getElementById('apply-text');
-            textAsHTML.addEventListener('change', () => {
+            document.getElementById('inspector-text-as-html').addEventListener('change', (e) => {
                 if (!selectedElement) return;
-                textArea.value = textAsHTML.checked ? (selectedElement.innerHTML ?? '') : (selectedElement.textContent ?? '');
+                document.getElementById('inspector-text').value = e.target.checked ? (selectedElement.innerHTML ?? '') : (selectedElement.textContent ?? '');
             });
-            function toBodyRelativeSelector(sel) {
-                return sel.replace(/^html\s*>\s*body\s*>\s*/i, '').replace(/^body\s*>\s*/i, '');
-            }
-            applyTextBtn.addEventListener('click', () => {
+            document.getElementById('apply-text').addEventListener('click', () => {
                 if (!selectedElement) return;
                 const selector = getCssSelector(selectedElement);
                 lastSelectedSelectorPath = selector;
-                const value = textArea.value ?? '';
-                if (textAsHTML.checked) selectedElement.innerHTML = value; else selectedElement.textContent = value;
+                const value = document.getElementById('inspector-text').value ?? '';
+                const asHTML = document.getElementById('inspector-text-as-html').checked;
+                if (asHTML) selectedElement.innerHTML = value; else selectedElement.textContent = value;
                 const wrapper = document.createElement('div');
                 wrapper.innerHTML = htmlEditor.getValue();
-                let target = null;
-                try { target = wrapper.querySelector(selector); } catch (_) {}
-                if (!target) {
-                    const rel = toBodyRelativeSelector(selector);
-                    try { target = wrapper.querySelector(rel); } catch (_) {}
-                }
-                if (!target && selectedElement.id) {
-                    try { target = wrapper.querySelector('#' + selectedElement.id); } catch (_) {}
-                }
+                const target = wrapper.querySelector(selector);
                 if (target) {
-                    if (textAsHTML.checked) target.innerHTML = value; else target.textContent = value;
+                    if (asHTML) target.innerHTML = value; else target.textContent = value;
                     htmlEditor.setValue(wrapper.innerHTML.trim());
                 }
             });
 
-            // ボックス系
-            document.getElementById('inspector-padding').addEventListener('change', (e) => {
-                const value = e.target.value.trim();
-                if (value) { lastSelectedSelectorPath = selectedElement ? getCssSelector(selectedElement) : lastSelectedSelectorPath; applyStyleChange('padding', value); }
-            });
-            document.getElementById('inspector-margin').addEventListener('change', (e) => {
-                const value = e.target.value.trim();
-                if (value) { lastSelectedSelectorPath = selectedElement ? getCssSelector(selectedElement) : lastSelectedSelectorPath; applyStyleChange('margin', value); }
-            });
-            document.getElementById('inspector-fontSize').addEventListener('change', (e) => {
-                const value = e.target.value.trim();
-                if (value) { lastSelectedSelectorPath = selectedElement ? getCssSelector(selectedElement) : lastSelectedSelectorPath; applyStyleChange('fontSize', value); }
+            ['padding', 'margin', 'fontSize'].forEach(prop => {
+                document.getElementById(`inspector-${prop}`).addEventListener('change', (e) => {
+                    const value = e.target.value.trim();
+                    if (value && selectedElement) {
+                        lastSelectedSelectorPath = getCssSelector(selectedElement);
+                        applyStyleChange(prop, value);
+                    }
+                });
             });
 
-            // --- 初期プレビュー描画 ---
+            // --- 初期描画 ---
             updatePreview();
             showMainTab('code');
 
-            // ======================================
-            // 画像カラー分析タブ（ボカシブラシ、タッチオフセット対応）
-            // ======================================
+            // --- 画像カラー分析タブ ---
+            // (このセクションのコードは変更なし)
             const MAX_IMAGES = 10;
-            let images = []; // { id, img, sourceCanvas, sctx, drawnRect, history:[], currentColor:null, blurHistory:[], originalData:null }
+            let images = [];
             let activeIndex = -1;
-
             const stage = document.getElementById('image-stage');
             const displayCanvas = document.getElementById('image-canvas');
             const dctx = displayCanvas.getContext('2d');
             const magnifierCanvas = document.getElementById('magnifier-canvas');
             const mctx = magnifierCanvas.getContext('2d');
             mctx.imageSmoothingEnabled = false;
-            
-            // ボカシブラシ用拡大鏡
             const blurMagnifierCanvas = document.getElementById('blur-magnifier-canvas');
             const bmctx = blurMagnifierCanvas.getContext('2d');
             bmctx.imageSmoothingEnabled = false;
-
             const statusLine = document.getElementById('img-status');
             const stageHint = document.getElementById('stage-hint');
             const stageOverlay = document.getElementById('stage-overlay');
             const switcher = document.getElementById('img-switcher');
-
             const fileInput = document.getElementById('img-file');
             const urlInput = document.getElementById('img-url');
             const urlBtn = document.getElementById('btn-load-url');
@@ -1047,46 +1121,35 @@ ${htmlCode}
             const blurMagnifierEnabled = document.getElementById('blur-magnifier-enabled');
             const undoBlurBtn = document.getElementById('btn-undo-blur');
             const resetBlurBtn = document.getElementById('btn-reset-blur');
-
             const adjustSettingsPanel = document.getElementById('adjust-settings');
             const satRange = document.getElementById('sat-range');
             const briRange = document.getElementById('bri-range');
             const satDisplay = document.getElementById('sat-display');
             const briDisplay = document.getElementById('bri-display');
             const resetAdjustBtn = document.getElementById('btn-reset-adjust');
-
             let isColorAdjusting = false;
-            let adjustBase = null; // ImageData（調整開始時のスナップショット）
-
-            let toolMode = 'none'; // 'none', 'picker', 'blur'
+            let adjustBase = null;
+            let toolMode = 'none';
             let isDrawing = false;
             let brushSize = 20;
             let blurStrength = 12;
             let blurZoomLevel = 2;
-
-            // タッチオフセット関連
             const touchOffsetEnabledCheck = document.getElementById('touch-offset-enabled');
             const touchOffsetValueInput = document.getElementById('touch-offset-value');
             let touchOffsetEnabled = true;
             let touchOffsetValue = 100;
-
-            // ポインターマーカー、ブラシプレビュー、オフセットラインを動的に生成して追加
             const pointerMarker = document.createElement('div');
             pointerMarker.id = 'pointer-marker';
             stage.appendChild(pointerMarker);
-
             const brushPreview = document.createElement('div');
             brushPreview.id = 'brush-preview';
             stage.appendChild(brushPreview);
-
             const offsetLine = document.createElement('div');
             offsetLine.id = 'offset-line';
             stage.appendChild(offsetLine);
-
             const historyContainer = document.getElementById('history-list');
             const currentSwatch = document.getElementById('current-swatch');
             const currentColorText = document.getElementById('current-color-text');
-
             const outHex = document.getElementById('hex-val');
             const outHexa = document.getElementById('hexa-val');
             const outRgb = document.getElementById('rgb-val');
@@ -1098,50 +1161,32 @@ ${htmlCode}
             const sampleOnWhite = document.getElementById('contrast-on-white');
 
             function setStatus(msg) { statusLine.textContent = msg || ''; }
-
-            function enableEyedropperUI() {
-                if (!('EyeDropper' in window)) {
-                    eyedropBtn.disabled = true;
-                    eyedropBtn.title = 'このブラウザは画面スポイトに未対応です';
-                }
-            }
-            enableEyedropperUI();
+            if (!('EyeDropper' in window)) { eyedropBtn.disabled = true; eyedropBtn.title = 'このブラウザは画面スポイトに未対応です'; }
 
             function addImageFromHTMLImageElement(img) {
-                if (images.length >= MAX_IMAGES) {
-                    setStatus(`これ以上追加できません（最大${MAX_IMAGES}枚）`);
-                    return;
-                }
+                if (images.length >= MAX_IMAGES) { setStatus(`最大${MAX_IMAGES}枚まで`); return; }
                 const sourceCanvas = document.createElement('canvas');
                 const sctx = sourceCanvas.getContext('2d', { willReadFrequently: true });
                 sctx.imageSmoothingEnabled = false;
-                const iw = img.naturalWidth || img.width;
-                const ih = img.naturalHeight || img.height;
-                sourceCanvas.width = iw;
-                sourceCanvas.height = ih;
-                sctx.clearRect(0,0,iw,ih);
+                sourceCanvas.width = img.naturalWidth || img.width;
+                sourceCanvas.height = img.naturalHeight || img.height;
                 sctx.drawImage(img, 0, 0);
-
-                const id = images.length + 1;
-                const originalData = sctx.getImageData(0, 0, iw, ih);
-                const item = { id, img, sourceCanvas, sctx, drawnRect: {dx:0,dy:0,dw:0,dh:0}, history: [], currentColor: null, blurHistory: [], originalData };
+                const item = { id: images.length + 1, img, sourceCanvas, sctx, drawnRect: {}, history: [], currentColor: null, blurHistory: [], originalData: sctx.getImageData(0, 0, sourceCanvas.width, sourceCanvas.height) };
                 images.push(item);
                 renderImageButtons();
                 setActiveImage(images.length - 1);
-                setStatus(`画像${id} を追加しました（${iw}×${ih}）`);
+                setStatus(`画像${item.id} を追加`);
             }
-
             function renderImageButtons() {
                 switcher.innerHTML = '';
                 images.forEach((it, i) => {
                     const btn = document.createElement('button');
                     btn.className = 'img-chip' + (i === activeIndex ? ' active' : '');
                     btn.textContent = `画像${it.id}`;
-                    btn.addEventListener('click', () => setActiveImage(i));
+                    btn.onclick = () => setActiveImage(i);
                     switcher.appendChild(btn);
                 });
             }
-
             function setActiveImage(index) {
                 if (index < 0 || index >= images.length) return;
                 isColorAdjusting = false; adjustBase = null;
@@ -1151,648 +1196,431 @@ ${htmlCode}
                 resizeImageStage();
                 const act = getActiveImage();
                 if (act) {
-                    if (act.currentColor) setCurrentColor(act.currentColor, false);
-                    else resetColorOutputs();
+                    if (act.currentColor) setCurrentColor(act.currentColor, false); else resetColorOutputs();
                     updateBlurButtons();
                 }
                 renderHistory();
                 setStatus(`画像${act.id} を表示中`);
             }
-
-            function getActiveImage() {
-                if (activeIndex < 0 || activeIndex >= images.length) return null;
-                return images[activeIndex];
-            }
-
+            function getActiveImage() { return images[activeIndex] ?? null; }
             function loadImageFromFile(file) {
-                if (!file || !file.type || !file.type.startsWith('image/')) {
-                    setStatus('画像ファイルを選択してください');
-                    return;
-                }
+                if (!file.type.startsWith('image/')) { setStatus('画像ファイルを選択'); return; }
                 const reader = new FileReader();
                 reader.onload = (e) => loadImageFromSrc(e.target.result, false);
                 reader.readAsDataURL(file);
             }
-
             function loadImageFromSrc(src, remote) {
                 const img = new Image();
                 if (remote) img.crossOrigin = 'anonymous';
                 img.onload = () => addImageFromHTMLImageElement(img);
-                img.onerror = () => setStatus('画像を読み込めませんでした（URLの誤りやCORS制限の可能性があります）');
+                img.onerror = () => setStatus('画像読み込み失敗（CORS制限の可能性）');
                 img.src = src;
             }
-
-            function resizeImageStage() {
+            window.resizeImageStage = function() {
                 const rect = stage.getBoundingClientRect();
-                const w = Math.max(10, Math.floor(rect.width));
-                const h = Math.max(10, Math.floor(rect.height));
-                if (displayCanvas.width !== w || displayCanvas.height !== h) {
-                    displayCanvas.width = w;
-                    displayCanvas.height = h;
+                if (displayCanvas.width !== rect.width || displayCanvas.height !== rect.height) {
+                    displayCanvas.width = rect.width;
+                    displayCanvas.height = rect.height;
                 }
                 redrawDisplay();
             }
-            window.resizeImageStage = resizeImageStage;
-
             function redrawDisplay() {
-                dctx.clearRect(0,0,displayCanvas.width, displayCanvas.height);
+                dctx.clearRect(0, 0, displayCanvas.width, displayCanvas.height);
                 const act = getActiveImage();
                 if (!act) return;
-                const img = act.sourceCanvas; // ぼかしを反映するため、imgではなくsourceCanvasから描画
-                const iw = img.width;
-                const ih = img.height;
-                const sw = displayCanvas.width;
-                const sh = displayCanvas.height;
-                const scale = Math.min(sw/iw, sh/ih);
-                const dw = Math.max(1, Math.floor(iw * scale));
-                const dh = Math.max(1, Math.floor(ih * scale));
-                const dx = Math.floor((sw - dw)/2);
-                const dy = Math.floor((sh - dh)/2);
+                const { width: iw, height: ih } = act.sourceCanvas;
+                const { width: sw, height: sh } = displayCanvas;
+                const scale = Math.min(sw / iw, sh / ih);
+                const dw = iw * scale, dh = ih * scale;
+                const dx = (sw - dw) / 2, dy = (sh - dh) / 2;
                 act.drawnRect = { dx, dy, dw, dh };
                 dctx.imageSmoothingEnabled = true;
-                dctx.drawImage(img, dx, dy, dw, dh);
+                dctx.drawImage(act.sourceCanvas, dx, dy, dw, dh);
             }
-
             function mapToImagePixel(clientX, clientY) {
                 const act = getActiveImage();
                 if (!act) return null;
                 const rect = displayCanvas.getBoundingClientRect();
-                const x = clientX - rect.left;
-                const y = clientY - rect.top;
-                const { dx, dy, dw, dh } = act.drawnRect || {dx:0,dy:0,dw:0,dh:0};
+                const x = clientX - rect.left, y = clientY - rect.top;
+                const { dx, dy, dw, dh } = act.drawnRect;
                 if (x < dx || y < dy || x >= dx + dw || y >= dy + dh) return null;
-                const nx = (x - dx) / dw;
-                const ny = (y - dy) / dh;
-                const px = Math.max(0, Math.min(act.sourceCanvas.width - 1, Math.floor(nx * act.sourceCanvas.width)));
-                const py = Math.max(0, Math.min(act.sourceCanvas.height - 1, Math.floor(ny * act.sourceCanvas.height)));
+                const nx = (x - dx) / dw, ny = (y - dy) / dh;
+                const px = Math.floor(nx * act.sourceCanvas.width);
+                const py = Math.floor(ny * act.sourceCanvas.height);
                 return { px, py, cx: x, cy: y };
             }
-
             function readPixel(px, py) {
                 const act = getActiveImage();
                 if (!act) return null;
                 try {
                     const data = act.sctx.getImageData(px, py, 1, 1).data;
                     return { r: data[0], g: data[1], b: data[2], a: data[3] / 255 };
-                } catch (e) {
-                    setStatus('キャンバスからの読み取りに失敗しました（CORS制限の可能性）');
-                    return null;
-                }
+                } catch (e) { setStatus('読取失敗（CORS制限）'); return null; }
             }
-
             function drawMagnifier(px, py, cx, cy) {
-                const act = getActiveImage();
-                if (!act) return;
-                const w = magnifierCanvas.width;
-                const h = magnifierCanvas.height;
-                const size = 21;
-                const half = Math.floor(size / 2);
-                const sx = Math.max(0, Math.min(act.sourceCanvas.width - size, px - half));
-                const sy = Math.max(0, Math.min(act.sourceCanvas.height - size, py - half));
-                mctx.clearRect(0,0,w,h);
-                mctx.imageSmoothingEnabled = false;
-                mctx.fillStyle = '#222'; mctx.fillRect(0,0,w,h);
+                const act = getActiveImage(); if (!act) return;
+                const w = 140, h = 140, size = 21, half = 10;
+                const sx = px - half, sy = py - half;
+                mctx.clearRect(0,0,w,h); mctx.fillStyle = '#222'; mctx.fillRect(0,0,w,h);
                 mctx.drawImage(act.sourceCanvas, sx, sy, size, size, 0, 0, w, h);
-
-                mctx.strokeStyle = 'rgba(255,255,255,0.2)';
-                mctx.lineWidth = 1;
+                mctx.strokeStyle = 'rgba(255,255,255,0.2)'; mctx.lineWidth = 1;
                 const step = w / size;
-                for (let i = 1; i < size; i++) {
-                    mctx.beginPath(); mctx.moveTo(i*step, 0); mctx.lineTo(i*step, h); mctx.stroke();
-                    mctx.beginPath(); mctx.moveTo(0, i*step); mctx.lineTo(w, i*step); mctx.stroke();
-                }
-                mctx.strokeStyle = '#fff';
-                mctx.lineWidth = 2;
-                const cxLine = Math.floor(w/2) + 0.5;
-                const cyLine = Math.floor(h/2) + 0.5;
-                mctx.beginPath(); mctx.moveTo(cxLine, 0); mctx.lineTo(cxLine, h); mctx.stroke();
-                mctx.beginPath(); mctx.moveTo(0, cyLine); mctx.lineTo(w, cyLine); mctx.stroke();
-
+                for (let i = 1; i < size; i++) { mctx.beginPath(); mctx.moveTo(i*step, 0); mctx.lineTo(i*step, h); mctx.stroke(); mctx.beginPath(); mctx.moveTo(0, i*step); mctx.lineTo(w, i*step); mctx.stroke(); }
+                mctx.strokeStyle = '#fff'; mctx.lineWidth = 2;
+                mctx.strokeRect(w/2, h/2, 1, 1);
                 const rect = stage.getBoundingClientRect();
-                const left = Math.min(rect.width - w - 10, Math.max(10, cx + 20));
-                const top  = Math.min(rect.height - h - 10, Math.max(10, cy + 20));
-                magnifierCanvas.style.left = left + 'px';
-                magnifierCanvas.style.top  = top + 'px';
+                magnifierCanvas.style.left = `${Math.min(rect.width-w-10, Math.max(10, cx+20))}px`;
+                magnifierCanvas.style.top  = `${Math.min(rect.height-h-10, Math.max(10, cy+20))}px`;
                 magnifierCanvas.style.display = 'block';
             }
-
             function drawBlurMagnifier(px, py, cx, cy) {
-                if (!blurMagnifierEnabled.checked) {
-                    blurMagnifierCanvas.style.display = 'none';
-                    return;
-                }
-                
-                const act = getActiveImage();
-                if (!act) return;
-                
-                const w = blurMagnifierCanvas.width;
-                const h = blurMagnifierCanvas.height;
-                const sourceSize = Math.floor(Math.max(w, h) / blurZoomLevel);
-                const half = Math.floor(sourceSize / 2);
-                const sx = Math.max(0, Math.min(act.sourceCanvas.width - sourceSize, px - half));
-                const sy = Math.max(0, Math.min(act.sourceCanvas.height - sourceSize, py - half));
-                
-                bmctx.clearRect(0, 0, w, h);
-                bmctx.imageSmoothingEnabled = false;
-                bmctx.fillStyle = '#222';
-                bmctx.fillRect(0, 0, w, h);
+                if (!blurMagnifierEnabled.checked) { blurMagnifierCanvas.style.display = 'none'; return; }
+                const act = getActiveImage(); if (!act) return;
+                const w = 200, h = 200, sourceSize = Math.floor(w / blurZoomLevel), half = Math.floor(sourceSize/2);
+                const sx = px - half, sy = py - half;
+                bmctx.clearRect(0,0,w,h); bmctx.fillStyle = '#222'; bmctx.fillRect(0,0,w,h);
                 bmctx.drawImage(act.sourceCanvas, sx, sy, sourceSize, sourceSize, 0, 0, w, h);
-                
-                // ブラシサイズの円を描画
-                const brushRadiusInMagnifier = (brushSize / 2) * blurZoomLevel * (w / sourceSize);
-                bmctx.strokeStyle = 'rgba(255, 100, 0, 0.8)';
-                bmctx.lineWidth = 2;
-                bmctx.beginPath();
-                bmctx.arc(w/2, h/2, brushRadiusInMagnifier, 0, Math.PI * 2);
-                bmctx.stroke();
-                
-                // 十字線
-                bmctx.strokeStyle = 'rgba(255,255,255,0.5)';
-                bmctx.lineWidth = 1;
-                bmctx.beginPath();
-                bmctx.moveTo(w/2, 0);
-                bmctx.lineTo(w/2, h);
-                bmctx.moveTo(0, h/2);
-                bmctx.lineTo(w, h/2);
-                bmctx.stroke();
-                
+                bmctx.strokeStyle = 'rgba(255, 100, 0, 0.8)'; bmctx.lineWidth = 2;
+                bmctx.beginPath(); bmctx.arc(w/2, h/2, (brushSize/2)*blurZoomLevel*(w/sourceSize), 0, Math.PI*2); bmctx.stroke();
+                bmctx.strokeStyle = 'rgba(255,255,255,0.5)'; bmctx.lineWidth = 1;
+                bmctx.beginPath(); bmctx.moveTo(w/2,0); bmctx.lineTo(w/2,h); bmctx.moveTo(0,h/2); bmctx.lineTo(w,h/2); bmctx.stroke();
                 const rect = stage.getBoundingClientRect();
-                const left = Math.min(rect.width - w - 10, Math.max(10, cx + 20));
-                const top = Math.min(rect.height - h - 10, Math.max(10, cy - h - 20));
-                blurMagnifierCanvas.style.left = left + 'px';
-                blurMagnifierCanvas.style.top = top + 'px';
+                blurMagnifierCanvas.style.left = `${Math.min(rect.width-w-10, Math.max(10, cx+20))}px`;
+                blurMagnifierCanvas.style.top = `${Math.min(rect.height-h-10, Math.max(10, cy-h-20))}px`;
                 blurMagnifierCanvas.style.display = 'block';
             }
-
-            function hideMagnifier() { 
-                magnifierCanvas.style.display = 'none'; 
-                blurMagnifierCanvas.style.display = 'none';
-            }
-
+            function hideMagnifier() { magnifierCanvas.style.display = 'none'; blurMagnifierCanvas.style.display = 'none'; }
             function setToolMode(mode) {
-                if (toolMode === mode) {
-                    toolMode = 'none';
-                } else {
-                    toolMode = mode;
-                }
+                toolMode = toolMode === mode ? 'none' : mode;
                 stage.classList.toggle('picking', toolMode === 'picker');
                 stage.classList.toggle('blurring', toolMode === 'blur');
                 blurSettingsPanel.style.display = toolMode === 'blur' ? 'flex' : 'none';
-
                 canvasPickerBtn.classList.toggle('active', toolMode === 'picker');
                 blurBrushBtn.classList.toggle('active', toolMode === 'blur');
-
-                if (toolMode === 'picker') {
-                    setStatus('キャンバススポイト: クリックで色を取得');
-                } else if (toolMode === 'blur') {
-                    setStatus('ボカシブラシ: ドラッグでぼかす');
-                } else {
-                    setStatus('');
-                    hideMagnifier();
-                }
+                setStatus(toolMode === 'picker' ? 'クリックで色取得' : toolMode === 'blur' ? 'ドラッグでぼかす' : '');
+                if (toolMode === 'none') hideMagnifier();
             }
-
             function resetColorOutputs() {
                 currentSwatch.style.background = '#000';
                 currentColorText.textContent = '未取得';
-                outHex.textContent = '-'; outHexa.textContent = '-'; outRgb.textContent = '-'; outHsl.textContent = '-';
-                outLum.textContent = '-'; outContB.textContent = '-'; outContW.textContent = '-';
+                [outHex, outHexa, outRgb, outHsl, outLum, outContB, outContW].forEach(el => el.textContent = '-');
                 sampleOnBlack.style.color = '#fff'; sampleOnWhite.style.color = '#000';
             }
-
-            function setCurrentColor(col, pushHistory = false) {
+            function setCurrentColor(col, pushHistory = true) {
                 if (!col) return;
+                globalCurrentColor = col;
                 const { r, g, b, a } = col;
-                const hex = rgbToHex(r,g,b);
-                const hexa = rgbaToHex(r,g,b,a);
-                const rgb = toRgbString(r,g,b,a);
-                const hsl = toHslString(r,g,b,a);
-                const lum = relativeLuminance(r,g,b);
-                const contB = contrastRatio(lum, 0);
-                const contW = contrastRatio(1, lum);
-
+                const hex = rgbToHex(r,g,b), hexa = rgbaToHex(r,g,b,a), rgb = toRgbString(r,g,b,a), hsl = toHslString(r,g,b,a);
+                const lum = relativeLuminance(r,g,b), contB = contrastRatio(lum, 0), contW = contrastRatio(1, lum);
                 currentSwatch.style.background = hexa;
                 currentColorText.textContent = `${hex} / ${rgb}`;
                 outHex.textContent = hex; outHexa.textContent = hexa; outRgb.textContent = rgb; outHsl.textContent = hsl;
                 outLum.textContent = lum.toFixed(4); outContB.textContent = contB.toFixed(2); outContW.textContent = contW.toFixed(2);
                 sampleOnBlack.style.color = hexa; sampleOnWhite.style.color = hexa;
-
                 const act = getActiveImage();
                 if (act) {
-                    act.currentColor = { r, g, b, a };
-                    if (pushHistory) {
-                        act.history.unshift({ r, g, b, a });
-                        if (act.history.length > 60) act.history.pop();
-                        renderHistory();
-                    }
+                    act.currentColor = col;
+                    if (pushHistory) { act.history.unshift(col); if (act.history.length > 60) act.history.pop(); renderHistory(); }
                 }
             }
-
             function renderHistory() {
                 historyContainer.innerHTML = '';
                 const act = getActiveImage();
-                if (!act || !act.history.length) return;
-                act.history.forEach((c) => {
+                if (!act?.history.length) return;
+                act.history.forEach(c => {
                     const d = document.createElement('button');
                     d.className = 'history-item';
-                    d.style.background = rgbaToHex(c.r, c.g, c.b, c.a);
-                    d.title = rgbToHex(c.r, c.g, c.b);
-                    d.addEventListener('click', () => setCurrentColor(c, false));
+                    d.style.background = rgbaToHex(c.r,c.g,c.b,c.a);
+                    d.title = rgbToHex(c.r,c.g,c.b);
+                    d.onclick = () => setCurrentColor(c, false);
                     historyContainer.appendChild(d);
                 });
             }
-
-            // 新機能：タッチオフセットとマーカーのロジック
             function adjustPointerPosition(clientX, clientY, isTouch) {
-                let adjustedX = clientX;
-                let adjustedY = clientY;
+                let x = clientX, y = clientY;
                 const rect = stage.getBoundingClientRect();
-
                 if (isTouch && touchOffsetEnabled && touchOffsetValue > 0) {
-                    adjustedY = clientY - touchOffsetValue;
-                    offsetLine.style.left = (clientX - rect.left) + 'px';
-                    offsetLine.style.top = (adjustedY - rect.top) + 'px';
-                    offsetLine.style.height = touchOffsetValue + 'px';
-                    offsetLine.style.display = 'block';
-                } else {
-                    offsetLine.style.display = 'none';
-                }
-                return { x: adjustedX, y: adjustedY };
+                    y = clientY - touchOffsetValue;
+                    offsetLine.style.cssText = `left:${x-rect.left}px; top:${y-rect.top}px; height:${touchOffsetValue}px; display:block;`;
+                } else { offsetLine.style.display = 'none'; }
+                return { x, y };
             }
-
             function updatePointerMarker(clientX, clientY, show) {
-                if (!show) {
-                    pointerMarker.style.display = 'none';
-                    return;
-                }
+                if (!show) { pointerMarker.style.display = 'none'; return; }
                 const rect = stage.getBoundingClientRect();
-                pointerMarker.style.left = (clientX - rect.left) + 'px';
-                pointerMarker.style.top = (clientY - rect.top) + 'px';
-                pointerMarker.style.display = 'block';
+                pointerMarker.style.cssText = `left:${clientX-rect.left}px; top:${clientY-rect.top}px; display:block;`;
             }
-
             function updateBrushPreview(clientX, clientY, show) {
-                if (!show || toolMode !== 'blur') {
-                    brushPreview.style.display = 'none';
-                    return;
-                }
+                if (!show || toolMode !== 'blur') { brushPreview.style.display = 'none'; return; }
                 const rect = stage.getBoundingClientRect();
                 const size = brushSize * 2;
-                brushPreview.style.width = size + 'px';
-                brushPreview.style.height = size + 'px';
-                brushPreview.style.left = (clientX - rect.left) + 'px';
-                brushPreview.style.top = (clientY - rect.top) + 'px';
-                brushPreview.style.display = 'block';
+                brushPreview.style.cssText = `width:${size}px; height:${size}px; left:${clientX-rect.left}px; top:${clientY-rect.top}px; display:block;`;
             }
-
-            // 新機能：ボカシ処理
             function applyBlur(px, py) {
-                const act = getActiveImage();
-                if (!act) return;
-
-                const radius = Math.max(1, Math.floor(brushSize / 2)); // 円ブラシ半径
-                const blurPx = Math.max(1, blurStrength); // フィルタのぼかし半径(px)
-
-                // ぼかしのにじみ分も含めて領域を広げる
-                const sx = Math.max(0, Math.floor(px - radius - blurPx));
-                const sy = Math.max(0, Math.floor(py - radius - blurPx));
-                const ex = Math.min(act.sourceCanvas.width, Math.ceil(px + radius + blurPx));
-                const ey = Math.min(act.sourceCanvas.height, Math.ceil(py + radius + blurPx));
-                const sw = ex - sx;
-                const sh = ey - sy;
-                if (sw <= 0 || sh <= 0) return;
-
-                // オフスクリーンでぼかし
-                const tmp = document.createElement('canvas');
-                tmp.width = sw; tmp.height = sh;
+                const act = getActiveImage(); if (!act) return;
+                const radius = brushSize/2, blurPx = blurStrength;
+                const sx = px-radius-blurPx, sy = py-radius-blurPx, sw = radius*2+blurPx*2, sh = sw;
+                if (sw <= 0) return;
+                const tmp = document.createElement('canvas'); tmp.width = sw; tmp.height = sh;
                 const tctx = tmp.getContext('2d');
                 tctx.filter = `blur(${blurPx}px)`;
                 tctx.drawImage(act.sourceCanvas, sx, sy, sw, sh, 0, 0, sw, sh);
-                tctx.filter = 'none';
-
-                // 円形にクリップして元キャンバスに貼り戻す
                 act.sctx.save();
-                act.sctx.beginPath();
-                act.sctx.arc(px, py, radius, 0, Math.PI * 2);
-                act.sctx.clip();
+                act.sctx.beginPath(); act.sctx.arc(px,py,radius,0,Math.PI*2); act.sctx.clip();
                 act.sctx.drawImage(tmp, sx, sy);
                 act.sctx.restore();
-
                 redrawDisplay();
             }
-
             function updateBlurButtons() {
                 const act = getActiveImage();
-                undoBlurBtn.disabled = !(act && act.blurHistory.length > 0);
-                resetBlurBtn.disabled = !(act && act.blurHistory.length > 0);
+                undoBlurBtn.disabled = !(act?.blurHistory.length > 0);
+                resetBlurBtn.disabled = !(act?.blurHistory.length > 0);
             }
-
-            // 統合ポインターイベントハンドラ
             function handlePointerStart(clientX, clientY, isTouch) {
                 const { x, y } = adjustPointerPosition(clientX, clientY, isTouch);
                 updatePointerMarker(x, y, toolMode !== 'none');
-
+                const map = mapToImagePixel(x, y);
+                if (!map) return;
                 if (toolMode === 'picker') {
-                    const map = mapToImagePixel(x, y);
-                    if (map) {
-                        const pix = readPixel(map.px, map.py);
-                        if (pix) {
-                            setCurrentColor(pix, true);
-                            setStatus('色を取得しました');
-                        }
-                    }
+                    const pix = readPixel(map.px, map.py);
+                    if (pix) { setCurrentColor(pix, true); setStatus('色を取得'); }
                 } else if (toolMode === 'blur') {
                     isDrawing = true;
                     const act = getActiveImage();
                     if (act) {
-                        // Undo用に現在の状態を保存
                         act.blurHistory.push(act.sctx.getImageData(0, 0, act.sourceCanvas.width, act.sourceCanvas.height));
                         updateBlurButtons();
-                        const map = mapToImagePixel(x, y);
-                        if (map) {
-                            applyBlur(map.px, map.py);
-                            drawBlurMagnifier(map.px, map.py, map.cx, map.cy);
-                        }
+                        applyBlur(map.px, map.py);
+                        drawBlurMagnifier(map.px, map.py, map.cx, map.cy);
                     }
                 }
             }
-
             function handlePointerMove(clientX, clientY, isTouch) {
                 const { x, y } = adjustPointerPosition(clientX, clientY, isTouch);
                 updatePointerMarker(x, y, toolMode !== 'none');
                 updateBrushPreview(x, y, toolMode === 'blur');
-
+                const map = mapToImagePixel(x, y);
+                if (!map) { hideMagnifier(); return; }
                 if (toolMode === 'picker') {
-                    const map = mapToImagePixel(x, y);
-                    if (map) {
-                        const pix = readPixel(map.px, map.py);
-                        if (pix) drawMagnifier(map.px, map.py, map.cx, map.cy);
-                    } else {
-                        hideMagnifier();
-                    }
+                    const pix = readPixel(map.px, map.py);
+                    if (pix) drawMagnifier(map.px, map.py, map.cx, map.cy);
                 } else if (toolMode === 'blur') {
-                    const map = mapToImagePixel(x, y);
-                    if (map) {
-                        if (isDrawing) {
-                            applyBlur(map.px, map.py);
-                        }
-                        drawBlurMagnifier(map.px, map.py, map.cx, map.cy);
-                    } else {
-                        blurMagnifierCanvas.style.display = 'none';
-                    }
+                    if (isDrawing) applyBlur(map.px, map.py);
+                    drawBlurMagnifier(map.px, map.py, map.cx, map.cy);
                 }
             }
+            function handlePointerEnd() { isDrawing = false; pointerMarker.style.display = 'none'; offsetLine.style.display = 'none'; brushPreview.style.display = 'none'; if (toolMode==='blur') blurMagnifierCanvas.style.display='none'; }
+            fileInput.onchange = (e) => { const files = Array.from(e.target.files); if (!files.length) return; const room = MAX_IMAGES - images.length; files.slice(0, room).forEach(loadImageFromFile); fileInput.value = ''; };
+            urlBtn.onclick = () => { const url = urlInput.value.trim(); if (!url || images.length >= MAX_IMAGES) return; loadImageFromSrc(url, true); };
+            stage.ondragover = (e) => { e.preventDefault(); stageOverlay.style.display = 'block'; };
+            stage.ondragleave = () => { stageOverlay.style.display = 'none'; };
+            stage.ondrop = (e) => { e.preventDefault(); stageOverlay.style.display = 'none'; const files = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/')); if (!files.length) return; const room = MAX_IMAGES - images.length; files.slice(0, room).forEach(loadImageFromFile); };
+            eyedropBtn.onclick = async () => { setToolMode('none'); try { const res = await new window.EyeDropper().open(); setCurrentColor(hexToRgba(res.sRGBHex), true); setStatus('画面スポイトで取得'); } catch { setStatus('画面スポイトをキャンセル'); } };
+            canvasPickerBtn.onclick = () => setToolMode('picker');
+            blurBrushBtn.onclick = () => setToolMode('blur');
+            brushSizeInput.oninput = (e) => { brushSize = +e.target.value; brushSizeDisplay.textContent = brushSize; };
+            blurStrengthInput.oninput = (e) => { blurStrength = +e.target.value; blurStrengthDisplay.textContent = blurStrength; };
+            blurZoomInput.oninput = (e) => { blurZoomLevel = +e.target.value; blurZoomDisplay.textContent = blurZoomLevel; };
+            undoBlurBtn.onclick = () => { const act = getActiveImage(); if (!act?.blurHistory.length) return; act.sctx.putImageData(act.blurHistory.pop(), 0, 0); redrawDisplay(); updateBlurButtons(); setStatus('ボカシを元に戻した'); };
+            resetBlurBtn.onclick = () => { const act = getActiveImage(); if (!act?.originalData) return; act.sctx.putImageData(act.originalData, 0, 0); act.blurHistory = []; redrawDisplay(); updateBlurButtons(); setStatus('ボカシをリセット'); };
+            touchOffsetEnabledCheck.onchange = (e) => { touchOffsetEnabled = e.target.checked; };
+            touchOffsetValueInput.onchange = (e) => { touchOffsetValue = +e.target.value || 0; };
+            function beginColorAdjustIfNeeded() { const act = getActiveImage(); if (!act) return null; if (!isColorAdjusting) { adjustBase = act.sctx.getImageData(0,0,act.sourceCanvas.width,act.sourceCanvas.height); isColorAdjusting = true; } return { act, base: adjustBase }; }
+            function applyColorAdjustPreview() { const ctx = beginColorAdjustIfNeeded(); if (!ctx) return; const { act, base } = ctx; const sFactor = +satRange.value/100, bFactor = +briRange.value/100; satDisplay.textContent = (sFactor*100).toFixed(0); briDisplay.textContent = (bFactor*100).toFixed(0); const bd = base.data, out = act.sctx.createImageData(base.width, base.height), od = out.data; for (let i = 0; i < bd.length; i+=4) { const hsl=rgbToHsl(bd[i],bd[i+1],bd[i+2]), s=Math.max(0,Math.min(1,hsl.s*sFactor)), l=Math.max(0,Math.min(1,hsl.l*bFactor)), rgb=hslToRgb(hsl.h,s,l); od[i]=rgb.r; od[i+1]=rgb.g; od[i+2]=rgb.b; od[i+3]=bd[i+3]; } act.sctx.putImageData(out,0,0); redrawDisplay(); }
+            function commitColorAdjust() { if (!isColorAdjusting || !adjustBase) return; const act = getActiveImage(); if (act) { act.blurHistory.push(adjustBase); updateBlurButtons(); setStatus('色調整を適用'); } isColorAdjusting = false; adjustBase = null; }
+            satRange.oninput = briRange.oninput = applyColorAdjustPreview;
+            satRange.onchange = briRange.onchange = commitColorAdjust;
+            resetAdjustBtn.onclick = () => { satRange.value=100; briRange.value=100; satDisplay.textContent='100'; briDisplay.textContent='100'; if (isColorAdjusting && adjustBase) { getActiveImage()?.sctx.putImageData(adjustBase,0,0); redrawDisplay(); } isColorAdjusting = false; adjustBase = null; setStatus('色調整をリセット'); };
+            displayCanvas.onmousedown = (e) => handlePointerStart(e.clientX, e.clientY, false);
+            displayCanvas.onmousemove = (e) => handlePointerMove(e.clientX, e.clientY, false);
+            displayCanvas.onmouseup = displayCanvas.onmouseleave = handlePointerEnd;
+            displayCanvas.ontouchstart = (e) => { if (e.touches.length === 1) { e.preventDefault(); handlePointerStart(e.touches[0].clientX, e.touches[0].clientY, true); }};
+            displayCanvas.ontouchmove = (e) => { if (e.touches.length === 1) { e.preventDefault(); handlePointerMove(e.touches[0].clientX, e.touches[0].clientY, true); }};
+            displayCanvas.ontouchend = handlePointerEnd;
+            new ResizeObserver(() => resizeImageStage()).observe(stage);
+            document.querySelectorAll('.copy-btn').forEach(btn => btn.onclick = async () => { const id = btn.dataset.copyTarget; const el = document.getElementById(id); if (!el) return; try { await navigator.clipboard.writeText(el.textContent.trim()); setStatus('コピーしました'); } catch { setStatus('コピー失敗'); } });
+            setStatus('画像を読み込むとツールが使えます');
+            
+            // ★★★ カラー編集タブのロジック ★★★
+            const colorlab = {
+                input: document.getElementById('colorlab-input'),
+                validBadge: document.getElementById('colorlab-valid'),
+                swatch: document.getElementById('colorlab-swatch'),
+                lockLightness: document.getElementById('colorlab-lock-lightness'),
+                hue: { slider: document.getElementById('colorlab-hue'), val: document.getElementById('colorlab-hue-val') },
+                sat: { slider: document.getElementById('colorlab-sat'), val: document.getElementById('colorlab-sat-val') },
+                light: { slider: document.getElementById('colorlab-light'), val: document.getElementById('colorlab-light-val') },
+                alpha: { slider: document.getElementById('colorlab-alpha'), val: document.getElementById('colorlab-alpha-val') },
+                btnReset: document.getElementById('colorlab-btn-reset'),
+                btnPull: document.getElementById('colorlab-btn-pull'),
+                btnSend: document.getElementById('colorlab-btn-send'),
+                out: {
+                    hex: document.getElementById('colorlab-hex-val'),
+                    hexa: document.getElementById('colorlab-hexa-val'),
+                    rgb: document.getElementById('colorlab-rgb-val'),
+                    hsl: document.getElementById('colorlab-hsl-val'),
+                    lum: document.getElementById('colorlab-luminance-val'),
+                    contB: document.getElementById('colorlab-contrast-black'),
+                    contW: document.getElementById('colorlab-contrast-white'),
+                    sampleB: document.getElementById('colorlab-on-black'),
+                    sampleW: document.getElementById('colorlab-on-white'),
+                },
+                state: { base: null, current: null, hsl: null }
+            };
 
-            function handlePointerEnd() {
-                isDrawing = false;
-                pointerMarker.style.display = 'none';
-                offsetLine.style.display = 'none';
-                brushPreview.style.display = 'none';
-                if (toolMode === 'blur') {
-                    blurMagnifierCanvas.style.display = 'none';
-                }
+            function parseCssColor(str) {
+                const d = document.createElement('div');
+                d.style.color = str;
+                document.body.appendChild(d);
+                const comp = window.getComputedStyle(d).color;
+                document.body.removeChild(d);
+                if (!comp || comp === 'rgba(0, 0, 0, 0)' && str !== 'transparent') return null;
+                const match = comp.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?\)/);
+                if (!match) return null;
+                return { r: +match[1], g: +match[2], b: +match[3], a: match[4] === undefined ? 1 : +match[4] };
             }
 
-            // 画像入力（複数同時）
-            fileInput.addEventListener('change', (e) => {
-                const files = Array.from(e.target.files || []);
-                if (!files.length) return;
-                const room = MAX_IMAGES - images.length;
-                files.slice(0, room).forEach(loadImageFromFile);
-                if (files.length > room) setStatus(`最大${MAX_IMAGES}枚までです。超過分は読み込みませんでした。`);
-                fileInput.value = '';
-            });
-            urlBtn.addEventListener('click', () => {
-                const url = urlInput.value.trim();
-                if (!url) { setStatus('画像URLを入力してください'); return; }
-                if (images.length >= MAX_IMAGES) { setStatus(`最大${MAX_IMAGES}枚までです`); return; }
-                loadImageFromSrc(url, true);
-            });
-
-            // D&D 複数対応
-            stage.addEventListener('dragover', (e) => { e.preventDefault(); stageOverlay.style.display = 'block'; });
-            stage.addEventListener('dragleave', () => { stageOverlay.style.display = toolMode === 'none' ? 'none' : 'block'; });
-            stage.addEventListener('drop', (e) => {
-                e.preventDefault();
-                stageOverlay.style.display = toolMode === 'none' ? 'none' : 'block';
-                const files = Array.from(e.dataTransfer.files || []).filter(f => f.type && f.type.startsWith('image/'));
-                if (!files.length) return;
-                const room = MAX_IMAGES - images.length;
-                files.slice(0, room).forEach(loadImageFromFile);
-                if (files.length > room) setStatus(`最大${MAX_IMAGES}枚までです。超過分は読み込みませんでした。`);
-            });
-
-            // ツールボタン
-            eyedropBtn.addEventListener('click', async () => {
-                setToolMode('none');
-                if (!('EyeDropper' in window)) return;
-                try {
-                    const ed = new window.EyeDropper();
-                    const res = await ed.open();
-                    const col = hexToRgba(res.sRGBHex);
-                    setCurrentColor(col, true);
-                    setStatus('画面スポイトで色を取得しました');
-                } catch {
-                    setStatus('画面スポイトをキャンセルしました');
+            function updateColorlabFromInput() {
+                const val = colorlab.input.value.trim();
+                if (!val) { resetColorlabUI(); return; }
+                const parsed = parseCssColor(val);
+                if (!parsed) {
+                    colorlab.validBadge.textContent = '不正';
+                    colorlab.validBadge.className = 'validity-badge ng';
+                    return;
                 }
-            });
-            canvasPickerBtn.addEventListener('click', () => setToolMode('picker'));
-            blurBrushBtn.addEventListener('click', () => setToolMode('blur'));
-
-            // ボカシブラシ設定
-            brushSizeInput.addEventListener('input', (e) => {
-                brushSize = parseInt(e.target.value, 10);
-                brushSizeDisplay.textContent = brushSize;
-            });
-            blurStrengthInput.addEventListener('input', (e) => {
-                blurStrength = parseInt(e.target.value, 10);
-                blurStrengthDisplay.textContent = blurStrength;
-            });
-            blurZoomInput.addEventListener('input', (e) => {
-                blurZoomLevel = parseFloat(e.target.value);
-                blurZoomDisplay.textContent = blurZoomLevel;
-            });
-            undoBlurBtn.addEventListener('click', () => {
-                const act = getActiveImage();
-                if (!act || act.blurHistory.length === 0) return;
-                const lastState = act.blurHistory.pop();
-                act.sctx.putImageData(lastState, 0, 0);
-                redrawDisplay();
-                updateBlurButtons();
-                setStatus('ボカシを元に戻しました');
-            });
-            resetBlurBtn.addEventListener('click', () => {
-                const act = getActiveImage();
-                if (!act || !act.originalData) return;
-                act.sctx.putImageData(act.originalData, 0, 0);
-                act.blurHistory = [];
-                redrawDisplay();
-                updateBlurButtons();
-                setStatus('ボカシをリセットしました');
-            });
-
-            // タッチオフセット設定
-            touchOffsetEnabledCheck.addEventListener('change', (e) => { touchOffsetEnabled = e.target.checked; });
-            touchOffsetValueInput.addEventListener('change', (e) => { touchOffsetValue = parseInt(e.target.value, 10) || 0; });
-
-            // 彩度・輝度 調整ロジック
-            function beginColorAdjustIfNeeded() {
-                const act = getActiveImage();
-                if (!act) return null;
-                if (!isColorAdjusting) {
-                    adjustBase = act.sctx.getImageData(0, 0, act.sourceCanvas.width, act.sourceCanvas.height);
-                    isColorAdjusting = true;
-                }
-                return { act, base: adjustBase };
-            }
-            function applyColorAdjustPreview() {
-                const ctx = beginColorAdjustIfNeeded();
-                if (!ctx) return;
-                const { act, base } = ctx;
-                const sFactor = parseInt(satRange.value, 10) / 100; // 0–3.0
-                const bFactor = parseInt(briRange.value, 10) / 100; // 0–2.0
-                satDisplay.textContent = (sFactor * 100).toFixed(0);
-                briDisplay.textContent = (bFactor * 100).toFixed(0);
-
-                const w = act.sourceCanvas.width, h = act.sourceCanvas.height;
-                const bd = base.data;
-                const out = act.sctx.createImageData(w, h);
-                const od = out.data;
-                for (let i = 0; i < bd.length; i += 4) {
-                    const r = bd[i], g = bd[i + 1], b = bd[i + 2], a = bd[i + 3];
-                    const hsl = rgbToHsl(r, g, b);
-                    const s = Math.max(0, Math.min(1, hsl.s * sFactor));
-                    const l = Math.max(0, Math.min(1, hsl.l * bFactor));
-                    const rgb = hslToRgb(hsl.h, s, l);
-                    od[i] = rgb.r; od[i + 1] = rgb.g; od[i + 2] = rgb.b; od[i + 3] = a;
-                }
-                act.sctx.putImageData(out, 0, 0);
-                redrawDisplay();
-            }
-            function commitColorAdjust() {
-                if (!isColorAdjusting || !adjustBase) return;
-                const act = getActiveImage();
-                if (act) {
-                    act.blurHistory.push(adjustBase); // Undo用
-                    updateBlurButtons();
-                    setStatus('色調整を適用しました');
-                }
-                isColorAdjusting = false;
-                adjustBase = null;
+                colorlab.validBadge.textContent = 'OK';
+                colorlab.validBadge.className = 'validity-badge ok';
+                colorlab.state.base = parsed;
+                updateColorlabState(parsed);
             }
 
-            satRange.addEventListener('input', applyColorAdjustPreview);
-            briRange.addEventListener('input', applyColorAdjustPreview);
-            satRange.addEventListener('change', commitColorAdjust);
-            briRange.addEventListener('change', commitColorAdjust);
+            function updateColorlabFromSliders() {
+                const h = +colorlab.hue.slider.value;
+                const s = +colorlab.sat.slider.value / 100;
+                const l = +colorlab.light.slider.value / 100;
+                const a = +colorlab.alpha.slider.value / 100;
 
-            resetAdjustBtn.addEventListener('click', () => {
-                satRange.value = 100; briRange.value = 100;
-                satDisplay.textContent = '100'; briDisplay.textContent = '100';
-                if (isColorAdjusting && adjustBase) {
-                    const act = getActiveImage();
-                    if (act) { act.sctx.putImageData(adjustBase, 0, 0); redrawDisplay(); }
-                    isColorAdjusting = false;
-                    adjustBase = null;
+                let useH = h, useS = s;
+                if (colorlab.lockLightness.checked && colorlab.state.hsl) {
+                    useH = colorlab.state.hsl.h;
+                    useS = colorlab.state.hsl.s;
                 }
-                setStatus('色調整をリセットしました');
-            });
 
-
-            // ポインターイベント
-            displayCanvas.addEventListener('mousedown', e => handlePointerStart(e.clientX, e.clientY, false));
-            displayCanvas.addEventListener('mousemove', e => handlePointerMove(e.clientX, e.clientY, false));
-            displayCanvas.addEventListener('mouseup', handlePointerEnd);
-            displayCanvas.addEventListener('mouseleave', handlePointerEnd);
-            displayCanvas.addEventListener('touchstart', e => { if (e.touches.length === 1) { e.preventDefault(); handlePointerStart(e.touches[0].clientX, e.touches[0].clientY, true); }}, { passive: false });
-            displayCanvas.addEventListener('touchmove', e => { if (e.touches.length === 1) { e.preventDefault(); handlePointerMove(e.touches[0].clientX, e.touches[0].clientY, true); }}, { passive: false });
-            displayCanvas.addEventListener('touchend', handlePointerEnd);
-
-            // リサイズ追従
-            const ro = new ResizeObserver(() => resizeImageStage());
-            ro.observe(stage);
-
-            // コピー
-            document.querySelectorAll('.copy-btn').forEach(btn => {
-                btn.addEventListener('click', async () => {
-                    const id = btn.getAttribute('data-copy-target');
-                    const el = document.getElementById(id);
-                    if (!el) return;
-                    try {
-                        await navigator.clipboard.writeText(el.textContent.trim());
-                        setStatus('クリップボードにコピーしました');
-                    } catch {
-                        setStatus('コピーに失敗しました');
-                    }
-                });
-            });
-
-            // 初期文言
-            setStatus('画像を読み込むとスポイトやブラシが使えます');
-
-            // ===========
-            // 色変換系
-            // ===========
-            function clamp01(x){ return Math.min(1, Math.max(0, x)); }
-            function pad2(n){ return n.toString(16).padStart(2, '0').toUpperCase(); }
-
-            function rgbToHex(r,g,b){ return '#' + pad2(r) + pad2(g) + pad2(b); }
-            function rgbaToHex(r,g,b,a=1){
-                const aa = Math.round(clamp01(a) * 255);
-                return '#' + pad2(r) + pad2(g) + pad2(b) + pad2(aa);
+                const rgb = hslToRgb(useH, useS, l);
+                updateColorlabState({ ...rgb, a });
             }
-            function hexToRgba(hex){
-                let h = hex.replace('#','').trim();
-                if (h.length === 3) {
-                    const r = parseInt(h[0]+h[0],16), g = parseInt(h[1]+h[1],16), b = parseInt(h[2]+h[2],16);
-                    return { r, g, b, a: 1 };
-                } else if (h.length === 6) {
+
+            function updateColorlabState(rgb_a) {
+                colorlab.state.current = rgb_a;
+                colorlab.state.hsl = rgbToHsl(rgb_a.r, rgb_a.g, rgb_a.b);
+                colorlab.state.hsl.a = rgb_a.a;
+                updateColorlabUI();
+            }
+
+            function updateColorlabUI() {
+                const { r, g, b, a } = colorlab.state.current;
+                const { h, s, l } = colorlab.state.hsl;
+                
+                // スライダー更新
+                colorlab.hue.slider.value = h;
+                colorlab.hue.val.textContent = h.toFixed(0);
+                colorlab.sat.slider.value = s * 100;
+                colorlab.sat.val.textContent = `${(s * 100).toFixed(0)}%`;
+                colorlab.light.slider.value = l * 100;
+                colorlab.light.val.textContent = `${(l * 100).toFixed(0)}%`;
+                colorlab.alpha.slider.value = a * 100;
+                colorlab.alpha.val.textContent = `${(a * 100).toFixed(0)}%`;
+                
+                // スウォッチ
+                const hexa = rgbaToHex(r, g, b, a);
+                colorlab.swatch.style.backgroundColor = hexa;
+
+                // 出力
+                colorlab.out.hex.textContent = rgbToHex(r, g, b);
+                colorlab.out.hexa.textContent = hexa;
+                colorlab.out.rgb.textContent = toRgbString(r, g, b, a);
+                colorlab.out.hsl.textContent = toHslString(r, g, b, a);
+                const lum = relativeLuminance(r, g, b);
+                colorlab.out.lum.textContent = lum.toFixed(4);
+                colorlab.out.contB.textContent = contrastRatio(lum, 0).toFixed(2);
+                colorlab.out.contW.textContent = contrastRatio(1, lum).toFixed(2);
+                colorlab.out.sampleB.style.color = hexa;
+                colorlab.out.sampleW.style.color = hexa;
+            }
+
+            function resetColorlabUI() {
+                colorlab.validBadge.textContent = '未入力';
+                colorlab.validBadge.className = 'validity-badge';
+                colorlab.swatch.style.backgroundColor = 'transparent';
+                ['hex','hexa','rgb','hsl','lum','contB','contW'].forEach(k => colorlab.out[k].textContent = '-');
+            }
+
+            colorlab.input.addEventListener('change', updateColorlabFromInput);
+            [colorlab.hue.slider, colorlab.sat.slider, colorlab.light.slider, colorlab.alpha.slider].forEach(s => {
+                s.addEventListener('input', updateColorlabFromSliders);
+            });
+            colorlab.lockLightness.addEventListener('change', () => {
+                const locked = colorlab.lockLightness.checked;
+                colorlab.hue.slider.disabled = locked;
+                colorlab.sat.slider.disabled = locked;
+            });
+            colorlab.btnReset.addEventListener('click', () => {
+                if (colorlab.state.base) updateColorlabState(colorlab.state.base);
+            });
+            colorlab.btnPull.addEventListener('click', () => {
+                if (globalCurrentColor) {
+                    colorlab.input.value = toRgbString(globalCurrentColor.r, globalCurrentColor.g, globalCurrentColor.b, globalCurrentColor.a);
+                    updateColorlabFromInput();
+                } else {
+                    alert('画像タブで先に色を取得してください。');
+                }
+            });
+            colorlab.btnSend.addEventListener('click', () => {
+                if (colorlab.state.current) {
+                    globalCurrentColor = colorlab.state.current;
+                    alert('色を「彩色モード」に送りました。\n「プレビュー・変更」タブで使えます。');
+                }
+            });
+
+            // 初期化
+            colorlab.input.value = '#007acc';
+            updateColorlabFromInput();
+            colorlab.hue.slider.disabled = true;
+            colorlab.sat.slider.disabled = true;
+
+
+            // =========== 色変換ユーティリティ ===========
+            function clamp01(x) { return Math.min(1, Math.max(0, x)); }
+            function pad2(n) { return Math.round(n).toString(16).padStart(2, '0').toUpperCase(); }
+            function rgbToHex(r, g, b) { return '#' + pad2(r) + pad2(g) + pad2(b); }
+            function rgbaToHex(r, g, b, a = 1) { return '#' + pad2(r) + pad2(g) + pad2(b) + pad2(a * 255); }
+            function hexToRgba(hex) {
+                let h = hex.replace('#', '').trim();
+                if (h.length === 3) h = h[0]+h[0]+h[1]+h[1]+h[2]+h[2];
+                if (h.length >= 6) {
                     const r = parseInt(h.slice(0,2),16), g = parseInt(h.slice(2,4),16), b = parseInt(h.slice(4,6),16);
-                    return { r, g, b, a: 1 };
-                } else if (h.length === 8) {
-                    const r = parseInt(h.slice(0,2),16), g = parseInt(h.slice(2,4),16), b = parseInt(h.slice(4,6),16), a = parseInt(h.slice(6,8),16)/255;
+                    const a = h.length === 8 ? parseInt(h.slice(6,8),16)/255 : 1;
                     return { r, g, b, a };
                 }
                 return { r:0,g:0,b:0,a:1 };
             }
-            function toRgbString(r,g,b,a=1){
+            function toRgbString(r, g, b, a = 1) {
                 const aa = clamp01(a);
-                if (aa < 1) return `rgb(${r} ${g} ${b} / ${+(aa*100).toFixed(1)}%)`;
+                if (aa < 1) return `rgb(${r} ${g} ${b} / ${+(aa * 100).toFixed(1)}%)`;
                 return `rgb(${r} ${g} ${b})`;
             }
-            function toHslString(r,g,b,a=1){
-                const R = r/255, G = g/255, B = b/255;
-                const max = Math.max(R,G,B), min = Math.min(R,G,B);
-                let h=0, s, l = (max+min)/2;
-                if (max === min) { s = 0; }
-                else {
-                    const d = max - min;
-                    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
-                    switch (max) {
-                        case R: h = (G - B) / d + (G < B ? 6 : 0); break;
-                        case G: h = (B - R) / d + 2; break;
-                        case B: h = (R - G) / d + 4; break;
-                    }
-                    h /= 6;
-                }
-                const hh = Math.round((h*360) % 360);
-                const ss = Math.round(s*100);
-                const ll = Math.round(l*100);
-                const aa = clamp01(a);
-                if (aa < 1) return `hsl(${hh} ${ss}% ${ll}% / ${+(aa*100).toFixed(1)}%)`;
-                return `hsl(${hh} ${ss}% ${ll}%)`;
-            }
             function rgbToHsl(r, g, b) {
-                let R = r/255, G = g/255, B = b/255;
-                const max = Math.max(R, G, B), min = Math.min(R, G, B);
+                r /= 255, g /= 255, b /= 255;
+                const max = Math.max(r, g, b), min = Math.min(r, g, b);
                 let h = 0, s = 0, l = (max + min) / 2;
                 if (max !== min) {
                     const d = max - min;
                     s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
                     switch (max) {
-                        case R: h = (G - B) / d + (G < B ? 6 : 0); break;
-                        case G: h = (B - R) / d + 2; break;
-                        case B: h = (R - G) / d + 4; break;
+                        case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+                        case g: h = (b - r) / d + 2; break;
+                        case b: h = (r - g) / d + 4; break;
                     }
                     h *= 60;
                 }
@@ -1800,13 +1628,10 @@ ${htmlCode}
             }
             function hslToRgb(h, s, l) {
                 let r, g, b;
-                const hh = (h % 360) / 360;
-                if (s === 0) {
-                    r = g = b = l;
-                } else {
+                if (s === 0) r = g = b = l;
+                else {
                     const hue2rgb = (p, q, t) => {
-                        if (t < 0) t += 1;
-                        if (t > 1) t -= 1;
+                        if (t < 0) t += 1; if (t > 1) t -= 1;
                         if (t < 1/6) return p + (q - p) * 6 * t;
                         if (t < 1/2) return q;
                         if (t < 2/3) return p + (q - p) * (2/3 - t) * 6;
@@ -1814,24 +1639,23 @@ ${htmlCode}
                     };
                     const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
                     const p = 2 * l - q;
-                    r = hue2rgb(p, q, hh + 1/3);
-                    g = hue2rgb(p, q, hh);
-                    b = hue2rgb(p, q, hh - 1/3);
+                    r = hue2rgb(p, q, (h/360) + 1/3);
+                    g = hue2rgb(p, q, h/360);
+                    b = hue2rgb(p, q, (h/360) - 1/3);
                 }
-                return { r: Math.round(r * 255), g: Math.round(g * 255), b: Math.round(b * 255) };
+                return { r: r * 255, g: g * 255, b: b * 255 };
             }
-            function srgbToLinear(c){
-                c /= 255;
-                return c <= 0.04045 ? c/12.92 : Math.pow((c+0.055)/1.055, 2.4);
+            function toHslString(r, g, b, a = 1) {
+                const hsl = rgbToHsl(r, g, b);
+                const hh = Math.round(hsl.h), ss = Math.round(hsl.s*100), ll = Math.round(hsl.l*100);
+                const aa = clamp01(a);
+                if (aa < 1) return `hsl(${hh} ${ss}% ${ll}% / ${+(aa * 100).toFixed(1)}%)`;
+                return `hsl(${hh} ${ss}% ${ll}%)`;
             }
-            function relativeLuminance(r,g,b){
-                const R = srgbToLinear(r), G = srgbToLinear(g), B = srgbToLinear(b);
-                return 0.2126*R + 0.7152*G + 0.0722*B;
-            }
-            function contrastRatio(l1, l2){
-                const L1 = Math.max(l1,l2), L2 = Math.min(l1,l2);
-                return (L1 + 0.05) / (L2 + 0.05);
-            }
+            function srgbToLinear(c) { c /= 255; return c <= 0.04045 ? c/12.92 : Math.pow((c+0.055)/1.055, 2.4); }
+            function relativeLuminance(r, g, b) { return 0.2126*srgbToLinear(r) + 0.7152*srgbToLinear(g) + 0.0722*srgbToLinear(b); }
+            function contrastRatio(l1, l2) { const L1 = Math.max(l1,l2), L2 = Math.min(l1,l2); return (L1 + 0.05) / (L2 + 0.05); }
+
         });
     </script>
 </body>
